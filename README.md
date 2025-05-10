@@ -1,11 +1,11 @@
 
-# Skunk is the start of new OPeNDAP server/service 
+# A New OPeNDAP Service 
 This server/service is designed to use data access and processing
 components of the existing Hyrax 1.x server, but without the overhead
 of a more general orchestration framework or an internal IPC layer
 between the Web API implementation and the core dispatch logic.
 
-The code uses nginx as teh web interface and cpp-httplib to implement the
+The code uses nginx as the web interface and cpp-httplib to implement the
 web API service endpoints.
 
 ## Some useful reference information
@@ -19,7 +19,9 @@ Something more advanced (re: AWS): https://docs.nginx.com/nginx/deployment-guide
 ## How to build the code
 
 Get nginx using homebrew, etc. You must understand how/where it is
-installed.
+installed. 
+
+Get httplib.h from https://github.com/yhirose/cpp-httplib.
 
 ### Build the service endpoint
 
@@ -39,7 +41,7 @@ Content-Length: 28
 Hello from the C++ backend!
 ```
 
-### Configure and start teh nginx server
+### Configure and start the nginx server
 
 Copy the nginx.conf file from this repo, `cp nginx.conf
 /opt/homebrew/etc/nginx/`
