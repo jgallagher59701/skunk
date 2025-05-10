@@ -14,6 +14,8 @@ NGINX Admin guide: https://docs.nginx.com/nginx/admin-guide/
 
 cpp-httplib: https://github.com/yhirose/cpp-httplib
 
+Something more advanced (re: AWS): https://docs.nginx.com/nginx/deployment-guides/amazon-web-services/high-availability-network-load-balancer/.
+
 ## How to build the code
 
 Get nginx using homebrew, etc. You must understand how/where it is
