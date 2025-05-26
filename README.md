@@ -2,8 +2,9 @@
 # A New OPeNDAP Service 
 This server/service is designed to use data access and processing
 components of the existing Hyrax 1.x server, but without the overhead
-of a more general orchestration framework or an internal IPC layer
-between the Web API implementation and the core dispatch logic.
+of a more general orchestration framework. It also lacks an internal IPC layer
+between the Web API implementation and the core dispatch logic, simplifying 
+the server.
 
 The code uses nginx as the web interface and cpp-httplib to implement the
 web API service endpoints.
