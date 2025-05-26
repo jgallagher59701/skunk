@@ -1,4 +1,4 @@
-````markdown
+
 # Deploying a Lightweight C++ Web Service (cpp-httplib) with nginx on macOS
 
 This guide walks you through deploying a minimal C++ web service using the lightweight **cpp-httplib** framework, behind an **nginx** reverse proxy, on macOS.
@@ -238,8 +238,3 @@ Your deployment now follows this architecture:
 ```
 
 This setup gives you a minimal, high-performance, and easy-to-maintain web service stack leveraging existing C++ code.
-
----
-
-```
-```
