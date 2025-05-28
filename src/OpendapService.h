@@ -5,6 +5,8 @@
 #ifndef SKUNK_OPENDAPSERVICE_H
 #define SKUNK_OPENDAPSERVICE_H
 
+#include "ServiceBase.h"
+
 /**
  * @brief The OPeNDAP service.
  *
@@ -13,17 +15,20 @@
  * operations.
  */
 class OpendapService : public ServiceBase {
-    ReadData &read_data;
+    /// This is an instance of the DataAccess class provides the 'how' for data access.
+    DataAccess &data_access;
+
 public:
     OpendapService() = delete;
-    explicit OpendapService(ReadData &read_data);
+    explicit OpendapService(DataAccess &data_access);
 
     OpendapService(const OpendapService &) = delete;
     OpendapService &operator=(const OpendapService &) = delete;
+    // @TODO Fix this - maybe we want the move stuff? jhrg 5/2/25
     OpendapService(const OpendapService &&) = delete;
     OpendapService &operator=(const OpendapService &&) = delete;
 
-    ~OpendapService() = default;
+    ~OpendapService() override = default;
 };
 
 };
