@@ -12,10 +12,19 @@
 
 namespace libdap {
 class DMR;
-
 }
 
-
+/**
+ * @brief Subclass this for different types of data sources
+ *
+ * This class provides an interface that builds a DAP4 DMR for the data source
+ * referenced by a path, subject to a DAP4 constraint expression and server
+ * side function. The getDMR() method should be specialized for different
+ * data types (e.g., netCDF4 files).
+ *
+ * The base class holds a reference to a MemoryCache instance that can be used
+ * to cache binary DMR objects as well as other things.
+ */
 class DataAccess {
     /// Add an instance of MemoryCache here.
     MemoryCache &cache_;
@@ -30,7 +39,6 @@ public:
     virtual ~DataAccess() = default;
 
     virtual std::unique_ptr<DMR> getDMR(const std::string &path, const std::string &ce, const std::string &func) = 0;
-
 };
 
 
