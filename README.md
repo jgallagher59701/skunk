@@ -17,7 +17,16 @@ cpp-httplib: https://github.com/yhirose/cpp-httplib
 
 Something more advanced (re: AWS): https://docs.nginx.com/nginx/deployment-guides/amazon-web-services/high-availability-network-load-balancer/.
 
-## How to build the code
+## How to build the code - in _services_
+
+At the top level, run these commands:
+```
+mkdir build && cd build
+cmake ..
+cmake --build . --parallel 4
+```
+
+## How to build the code - In cpp_web_service
 
 Get nginx using homebrew, etc. You must understand how/where it is
 installed. 
