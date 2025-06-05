@@ -2,7 +2,10 @@
 // Created by James Gallagher on 5/26/25.
 //
 
-#include "OpendapService.h"
+#include <string>
+#include <sstream>
+#include <algorithm>
+#include <unordered_map>
 
 #include "httplib.h"
 
@@ -10,9 +13,24 @@ int main(void) {
     httplib::Server svr;
 
     // Changed the first arg from /api/endpoint to / to test a matching
-    // change in ngonx.conf. jhrg 5/10/25
-    svr.Get("/", [](const httplib::Request &, httplib::Response &res) {
-        res.set_content("Hello from the C++ backend!\n", "text/plain");
+    // change in nginx.conf. jhrg 5/10/25
+    svr.Get("/", [](const httplib::Request &req, httplib::Response &res) {
+        auto headers = req.headers;
+        auto path = req.path;
+        auto path_params = req.path_params;
+
+        ostringstream oss;
+        oss << "Request headers: \n";
+        std::for_each(headers.begin(), headers.end(), [&oss](const auto& kv) {
+            ss << "    " << kv.first << ": " << kv.second << "\n";
+        });
+        oss << "Path: " << path << "\n";
+        oss << "Path parameters: \n" ;
+        std::for_each(path_params.begin(), path_params.end(), [&oss](const auto& kv) {
+            ss << "    " << kv.first << ": " << kv.second << "\n";
+        });
+
+        res.set_content(oss.str(), "text/plain");
     });
 
     // Listen on localhost, port 8080
