@@ -20,10 +20,46 @@ Something more advanced (re: AWS): https://docs.nginx.com/nginx/deployment-guide
 ## How to build the code - in _services_
 
 At the top level, run these commands:
-```
+```bash
 mkdir build && cd build
 cmake ..
 cmake --build . --parallel 4
+```
+
+There's one test. To run it, go into services/opendap and run ctest. That will
+run the one GTest test.
+
+```bash
+cd services/opendap
+ctest
+```
+
+The result is:
+```bash
+services/opendap % ctest
+Test project /Users/jimg/src/opendap/skunk/build/services/opendap
+    Start 1: HandlerTest
+1/1 Test #1: HandlerTest ......................   Passed    0.01 sec
+
+100% tests passed, 0 tests failed out of 1
+
+Total Test time (real) =   0.01 sec
+```
+
+Or,
+```bash
+services/opendap % ./test_handler 
+Running main() from /private/tmp/googletest-20250430-4705-6kzjyz/googletest-1.17.0/googletest/src/gtest_main.cc
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from HandlerTest
+[ RUN      ] HandlerTest.HandlesRequestWithHeadersAndParams
+[       OK ] HandlerTest.HandlesRequestWithHeadersAndParams (0 ms)
+[----------] 1 test from HandlerTest (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 1 test.
 ```
 
 ## How to build the code - In cpp_web_service
