@@ -11,7 +11,7 @@
 
 using namespace std;
 
-int main(void) {
+int main() {
     httplib::Server svr;
 
     svr.Get(R"(/.+)", [](const httplib::Request& req, httplib::Response& res) {

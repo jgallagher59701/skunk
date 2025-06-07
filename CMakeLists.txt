@@ -14,4 +14,5 @@ target_include_directories(httplib INTERFACE external/cpp-httplib)
 
 # Your Web Services
 add_subdirectory(services/opendap)
+add_subdirectory(services/teapot)
 

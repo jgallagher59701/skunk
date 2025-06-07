@@ -29,6 +29,11 @@ cmake --build . --parallel 4
 There's one test. To run it, go into services/opendap and run ctest. That will
 run the one GTest test.
 
+To install Google Test on OSX:
+```bash
+brew install googletest
+```
+
 ```bash
 cd services/opendap
 ctest
