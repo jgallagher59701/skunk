@@ -5,11 +5,6 @@
 #include <string>
 #include <sstream>
 
-#if 0
-#include <algorithm>
-#include <unordered_map>
-#endif
-
 #include "handler.h"
 
 std::string handle_request(const httplib::Request& req) {

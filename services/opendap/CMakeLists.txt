@@ -9,8 +9,7 @@ target_link_libraries(handler PRIVATE
 )
 
 target_sources(opendap PRIVATE
-        src/OpendapService.cpp
-        # additional source files
+        src/opendap_service.cpp
 )
 
 target_link_libraries(opendap PRIVATE

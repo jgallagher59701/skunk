@@ -9,9 +9,10 @@ add_library(httplib INTERFACE)
 target_include_directories(httplib INTERFACE external/cpp-httplib)
 
 # External Libraries (selective)
-# add_subdirectory(external/libdap4)
+add_subdirectory(external/libdap4)
 # add_subdirectory(external/bes)
 
 # Your Web Services
 add_subdirectory(services/opendap)
+add_subdirectory(services/teapot)
 

@@ -51,6 +51,80 @@ int main() {
 
 ---
 
+## ✅ Path Parameters and Query-string parameters
+
+In `cpp-httplib`, `req.path_params` and `req.params` serve different purposes 
+related to how the server interprets the incoming URL. Here’s a detailed breakdown:
+
+---
+
+## 🧭 `req.params`: **Query String Parameters**
+
+These are the parameters passed **after the `?` in a URL**, using standard `key=value`
+format, often used in web APIs to pass filters or options.
+
+### Example URL:
+
+```
+GET /api/data?ce=123&function=echo
+```
+
+### In this case:
+
+* `req.params["ce"]` → `"123"`
+* `req.params["function"]` → `"echo"`
+
+### Summary:
+
+* Extracted from the **query string**
+* Automatically parsed by `cpp-httplib`
+* Available regardless of route patterns
+
+---
+
+## 🧩 `req.path_params`: **Path Pattern Captures**
+
+These are values extracted from the **URL path** itself using **named capture groups** in the route definition.
+
+### Example Route:
+
+```cpp
+svr.Get(R"(/users/(?<userid>\d+))", handler);
+```
+
+### Incoming Request:
+
+```
+GET /users/42
+```
+
+### Then:
+
+* `req.path_params["userid"]` → `"42"`
+
+### Notes:
+
+* Requires use of **named capture groups** in the regex pattern: `(?<name>...)`
+* Only populated if the route uses such a pattern
+
+---
+
+## 🧠 Key Differences
+
+| Feature        | `req.params`                         | `req.path_params`                                              |
+| -------------- | ------------------------------------ | -------------------------------------------------------------- |
+| Comes from     | **Query string** (after `?`)         | **Path capture groups** in regex pattern                       |
+| Requires regex | ❌ No                                 | ✅ Yes (`(?<name>pattern)`)                                     |
+| Example        | `/api/foo?bar=baz` → `params["bar"]` | `/user/42` matched by `/user/(?<id>\d+)` → `path_params["id"]` |
+| Common use     | Filtering, options, extra inputs     | Dynamic route variables (e.g. user ID)                         |
+
+---
+
+## ✅ Summary
+
+* Use `**req.params**` for standard query strings (`?key=value`).
+* Use `**req.path_params**` when extracting values from the **URL path** itself via named regex captures.
+
 ## ✅ **Writing Different Types of Responses**
 
 ### 1. **String Responses**
