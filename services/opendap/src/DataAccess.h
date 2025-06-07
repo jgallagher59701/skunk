@@ -27,20 +27,18 @@ class DMR;
  */
 class DataAccess {
     /// Add an instance of MemoryCache here.
-    MemoryCache &cache_;
+    // MemoryCache &cache_; jhrg later
 
 public:
-    DataAccess() = delete;
-    explicit DataAccess(MemoryCache &cache) cache_(cache) { }
-    DataAccess(const DataAccess&) = delete;
-    DataAccess(DataAccess&&) noexcept = delete;
-    DataAccess& operator=(const DataAccess&) = delete;
-    DataAccess& operator=(DataAccess&&) noexcept = delete;
+    DataAccess() = default;
+    // explicit DataAccess(MemoryCache &cache) cache_(cache) { } jhrg later
+    DataAccess(const DataAccess&) = default;
+    DataAccess(DataAccess&&) noexcept = default;
+    DataAccess& operator=(const DataAccess&) = default;
+    DataAccess& operator=(DataAccess&&) noexcept = default;
     virtual ~DataAccess() = default;
 
     virtual std::unique_ptr<DMR> getDMR(const std::string &path, const std::string &ce, const std::string &func) = 0;
 };
-
-
 
 #endif //DATAACCESS_H
