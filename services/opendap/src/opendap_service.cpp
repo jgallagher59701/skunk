@@ -70,7 +70,7 @@ unique_ptr<DataAccess>  find_data_access(const enum data_format &df) {
 int main() {
     httplib::Server svr;
 
-    // Register loger
+    // Register loger - see logger in example
     // Register exception handler
 
     // The DMR return
