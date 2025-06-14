@@ -520,5 +520,207 @@ include(${CMAKE_SOURCE_DIR}/cmake/CommonFlags.cmake)
 | `include("CommonFlags.cmake")`   | ✅ Yes (explicit)        | Modular, larger projects |
 
 ---
+# Handling the generated headers
 
-Let me know which style you'd prefer and I can sketch it out for your actual `libdap` structure.
+Great question — and the answer is:
+
+**❌ No**, `@TEST_SRC_DIR@` is **not defined by CMake by default**.
+It’s just a placeholder in your `test_config.h.in` file that **you must define yourself** in your `CMakeLists.txt` before calling `configure_file()`.
+
+---
+
+## ✅ How It Works
+
+When CMake processes this line:
+
+```cmake
+configure_file(test_config.h.in test_config.h)
+```
+
+…it replaces any `@VAR@` in the input file with the current value of `VAR` in the CMake scope.
+
+So if you want `@TEST_SRC_DIR@` to become `/Users/jimg/src/libdap/unit-tests`, you need to set:
+
+```cmake
+set(TEST_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+```
+
+before calling `configure_file()`.
+
+---
+
+## ✅ Full Example in `unit-tests/CMakeLists.txt`
+
+```cmake
+# Set TEST_SRC_DIR to the absolute path of the test sources
+set(TEST_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+
+# Generate test_config.h from the template
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_config.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/test_config.h
+)
+```
+
+This causes the line:
+
+```c
+#define TEST_SRC_DIR "@TEST_SRC_DIR@"
+```
+
+in `test_config.h.in` to be converted into:
+
+```c
+#define TEST_SRC_DIR "/absolute/path/to/unit-tests"
+```
+
+---
+
+## 🔁 Tip: To verify what CMake is substituting
+
+You can log the value with:
+
+```cmake
+message(STATUS "TEST_SRC_DIR = ${TEST_SRC_DIR}")
+```
+
+---
+
+## ✅ Summary
+
+| Task                               | CMake defines it?             | What you should do                    |
+| ---------------------------------- | ----------------------------- | ------------------------------------- |
+| Use `@TEST_SRC_DIR@` in `.in` file | ❌ No                          | Call `set(TEST_SRC_DIR ...)` in CMake |
+| Replace with actual path           | ✅ Yes, via `configure_file()` | Ensure the variable is set first      |
+
+---
+
+Let me know if you want to set `TEST_SRC_DIR` relative to the project root or add other variables to the header.
+
+# About supporting the CppUnit tests
+How to support the different combinations of libraries the unit tests need to link against?
+
+Excellent question — and this is a classic build-organization trade-off: **simplicity vs. precision**.
+
+Let’s break it down and find the cleanest, most maintainable path.
+
+---
+
+## ✅ TL;DR Recommendation
+
+**Group your test executables by required dependencies**, and link each group to just what it needs.
+
+* This keeps linker errors obvious.
+* Avoids overlinking (especially important if any libraries have side effects or external dependencies).
+* Makes test organization more intentional and scalable.
+
+---
+
+## 🎯 Why Not Just Link Everything to Everything?
+
+| Problem                  | Why it matters                        |
+| ------------------------ | ------------------------------------- |
+| Overlinking              | Masks missing dependencies in sources |
+| Slower link time         | Especially in large codebases         |
+| Platform-specific issues | Some platforms reject unused symbols  |
+| Linker conflicts         | Especially with duplicate definitions |
+
+---
+
+## 🧱 Suggested Structure in `unit-tests/CMakeLists.txt`
+
+### 1. Define your test source groups
+
+```cmake
+set(TESTS_DAP_ONLY
+    TestBaseType.cc
+    TestAttrTable.cc
+)
+
+set(TESTS_DAPCLIENT
+    TestConnect.cc
+)
+
+set(TESTS_DAPSERVER
+    TestDODSFilter.cc
+)
+
+set(TESTS_WITH_TESTLIB
+    TestWithSupportCode.cc
+)
+```
+
+### 2. Function to build and register test executables
+
+```cmake
+function(build_test target source_files)
+    add_executable(${target} ${source_files})
+
+    target_include_directories(${target}
+        PRIVATE
+            ${CMAKE_CURRENT_BINARY_DIR}
+            ${CMAKE_SOURCE_DIR}
+            ${CMAKE_BINARY_DIR}
+    )
+
+    target_link_libraries(${target}
+        PRIVATE
+            dap
+            CppUnit::CppUnit
+    )
+
+    add_test(NAME ${target} COMMAND ${target})
+endfunction()
+```
+
+### 3. Build the groups and link selectively
+
+```cmake
+foreach(src ${TESTS_DAP_ONLY})
+    get_filename_component(tgt ${src} NAME_WE)
+    build_test(${tgt} ${src})
+endforeach()
+
+foreach(src ${TESTS_DAPCLIENT})
+    get_filename_component(tgt ${src} NAME_WE)
+    build_test(${tgt} ${src})
+    target_link_libraries(${tgt} PRIVATE dapclient)
+endforeach()
+
+foreach(src ${TESTS_DAPSERVER})
+    get_filename_component(tgt ${src} NAME_WE)
+    build_test(${tgt} ${src})
+    target_link_libraries(${tgt} PRIVATE dapserver)
+endforeach()
+
+foreach(src ${TESTS_WITH_TESTLIB})
+    get_filename_component(tgt ${src} NAME_WE)
+    build_test(${tgt} ${src})
+    target_link_libraries(${tgt} PRIVATE testlib)
+endforeach()
+```
+
+---
+
+## 🧠 Bonus: Automatic grouping (optional)
+
+If you don’t want to hardcode filenames, you can:
+
+* Add custom markers (e.g., comment `// depends: dapclient`) and parse them.
+* Use CMake file globbing or metadata files (e.g., `test_manifest.cmake`).
+
+But for now: **explicit grouping is clearer and more maintainable**.
+
+---
+
+## ✅ Summary
+
+| Strategy                   | Use When                                      |
+| -------------------------- | --------------------------------------------- |
+| Link all tests to all libs | Quick prototypes, early stage                 |
+| Group and link per need    | ✔ Production-quality, maintainable builds     |
+| Auto-group via metadata    | Large test suites (100+), CI-managed projects |
+
+---
+
+Let me know if you want to automate the grouping or check for unused links in CI.
