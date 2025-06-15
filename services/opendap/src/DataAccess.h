@@ -8,8 +8,6 @@
 #include <string>
 #include <memory>
 
-#include "MemoryCache.h"
-
 namespace libdap {
 class DMR;
 }
@@ -26,8 +24,6 @@ class DMR;
  * to cache binary DMR objects as well as other things.
  */
 class DataAccess {
-    /// Add an instance of MemoryCache here.
-    // MemoryCache &cache_; jhrg later
 
 public:
     DataAccess() = default;
@@ -38,7 +34,8 @@ public:
     DataAccess& operator=(DataAccess&&) noexcept = default;
     virtual ~DataAccess() = default;
 
-    virtual std::unique_ptr<DMR> getDMR(const std::string &path, const std::string &ce, const std::string &func) = 0;
+    virtual std::string get_dmr_file(const std::string &path, const std::string &ce, const std::string &func);
+    virtual std::unique_ptr<libdap::DMR> get_dmr(const std::string &path, const std::string &ce, const std::string &func) = 0;
 };
 
 #endif //DATAACCESS_H
