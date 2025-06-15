@@ -9,8 +9,7 @@ add_library(httplib INTERFACE)
 target_include_directories(httplib INTERFACE external/cpp-httplib)
 
 # External Libraries (selective)
-add_subdirectory(external/libdap4)
-# add_subdirectory(external/bes)
+# add_subdirectory(external/libdap4) Does not work from here. Builds OK by itself. jhrg 6/15/25
 
 # Your Web Services
 add_subdirectory(services/opendap)
