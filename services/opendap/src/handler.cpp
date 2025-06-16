@@ -84,13 +84,6 @@ void handle_dmr_request(const string &data_path, const httplib::Request& req, ht
         return;
     }
 
-    // Could be... jhrg 6/15/25
-    // Get the DataAccess instance
-    // DataAccess da = find_data_access(format);
-    // Get the DMR
-    // Build the DMR response
-    // Return the DMR response
-
     // send response headers, blank line
     // send response body
     res.set_content("Moof!", "text/plain");

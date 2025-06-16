@@ -24,14 +24,18 @@ ExternalProject_Add(libdap4
 		SOURCE_DIR ${LIBDAP4_SOURCE_DIR}
 		CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDAP4_INSTALL_DIR}
 		INSTALL_DIR ${LIBDAP4_INSTALL_DIR}
-		BUILD_BYPRODUCTS ${CMAKE_BINARY_DIR}/libdap4/install/lib/libdap.a
+		BUILD_BYPRODUCTS ${CMAKE_BINARY_DIR}/libdap4/install/lib/libdap.dylib
+			${CMAKE_BINARY_DIR}/libdap4/install/lib/libdapclient.dylib
+			${CMAKE_BINARY_DIR}/libdap4/install/lib/libdapserver.dylib
 )
 
 ExternalProject_Get_Property(libdap4 install_dir)
 
 add_library(libdap STATIC IMPORTED GLOBAL)
 set_target_properties(libdap PROPERTIES
-		IMPORTED_LOCATION ${LIBDAP4_INSTALL_DIR}/lib/libdap.a
+		IMPORTED_LOCATION ${LIBDAP4_INSTALL_DIR}/lib/libdap.dylib
+			${CMAKE_BINARY_DIR}/libdap4/install/lib/libdapclient.dylib
+			${CMAKE_BINARY_DIR}/libdap4/install/lib/libdapserver.dylib
 		# This still breaks things in service/opendap. Replaced with libdap_interface. jhrg 6/16/25
 		# INTERFACE_INCLUDE_DIRECTORIES "$<BUILD_INTERFACE:${LIBDAP4_INSTALL_DIR}/include>"
 )
