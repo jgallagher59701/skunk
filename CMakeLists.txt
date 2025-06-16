@@ -20,15 +20,19 @@ ExternalProject_Add(libdap4
 
 ExternalProject_Get_Property(libdap4 install_dir)
 
-# Declare IMPORTED target for libdap
+# Declare IMPORTED target for libdap - this means it can be used in several CMakeLists files.
+# jhrg 6/16/25
 add_library(libdap STATIC IMPORTED GLOBAL)
 set_target_properties(libdap PROPERTIES
-        IMPORTED_LOCATION ${install_dir}/lib/libdap.a         # Adjust to match actual file
-        INTERFACE_INCLUDE_DIRECTORIES ${install_dir}/include
+        IMPORTED_LOCATION ${install_dir}/lib/libdap.a
+		INTERFACE_INCLUDE_DIRECTORIES "$<BUILD_INTERFACE:${install_dir}/include>"
 )
 
 # Ensure libdap is built before used
 add_dependencies(libdap libdap4)
+
+add_subdirectory(services/opendap)
+add_subdirectory(services/teapot)
 
 # Link to your own target
 #add_executable(my_app src/main.cpp)
