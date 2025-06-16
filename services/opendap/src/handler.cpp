@@ -78,18 +78,10 @@ void handle_dmr_request(const string &data_path, const httplib::Request& req, ht
     const auto ce = req.has_param("dap4_ce") ? req.get_param_value("dap4_ce") : "";
     const auto function = req.has_param("dap4_function") ? req.get_param_value("dap4_function") : "";
 
-    // get response stuff
-    ostringstream oss;
-    oss << "data_path: " << data_path << '\n';
-    oss << "dap4_ce: " << ce << '\n';
-    oss << "dap4_function: " << function << '\n';
-
     const auto format = find_format(data_path);
-    if (format == nc)
-        oss << "format: nc\n";
-    else
-        oss << "format: unknown\n";
 
+    if (format == nc)
+        return
     // Could be... jhrg 6/15/25
     // Get the DataAccess instance
     // DataAccess da = find_data_access(format);

@@ -2,9 +2,12 @@ add_executable(opendap)
 
 add_library(handler
         src/handler.cpp
+        src/DataAccess.cpp
+        src/DataAccessNetCDF.cpp
 )
 
 target_link_libraries(handler PRIVATE
+        libdap
         httplib  # assuming header-only httplib as an INTERFACE target
 )
 
@@ -22,7 +25,7 @@ enable_testing()
 find_package(GTest REQUIRED)
 
 # Include httplib (assumed to be in your project root or via package manager)
-include_directories(src)
+include_directories(src ${CMAKE_BINARY_DIR}/libdap4/install/include)
 
 add_executable(test_handler test/test_handler.cpp)
 target_link_libraries(test_handler handler httplib GTest::GTest GTest::Main pthread)

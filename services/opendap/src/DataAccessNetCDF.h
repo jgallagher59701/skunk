@@ -28,8 +28,6 @@ class DMR;
  * to cache binary DMR objects as well as other things.
  */
 class DataAccessNetCDF: DataAccess {
-    /// Add an instance of MemoryCache here.
-    // MemoryCache &cache_; jhrg later
 
 public:
     DataAccessNetCDF() = default;
@@ -40,7 +38,7 @@ public:
     DataAccessNetCDF& operator=(DataAccessNetCDF&&) noexcept = default;
     ~DataAccessNetCDF() override = default;
 
-    virtual std::unique_ptr<DMR> getDMR(const std::string &path, const std::string &ce, const std::string &func);
+    std::unique_ptr<libdap::DMR> getDMR(const std::string &path, const std::string &ce, const std::string &func) override;
 };
 
 #endif //DATAACCESS_H
