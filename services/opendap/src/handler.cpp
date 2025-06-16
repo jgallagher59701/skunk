@@ -72,16 +72,18 @@ unique_ptr<DataAccess>  find_data_access(const enum data_format &df) {
 
 #endif
 
-void handle_dmr_request(const string &data_path, const httplib::Request& req, httplib::Response& res)
-{
+void handle_dmr_request(const string &data_path, const httplib::Request& req, httplib::Response& res) {
     // extract info from headers, etc.
     const auto ce = req.has_param("dap4_ce") ? req.get_param_value("dap4_ce") : "";
     const auto function = req.has_param("dap4_function") ? req.get_param_value("dap4_function") : "";
 
     const auto format = find_format(data_path);
 
-    if (format == nc)
-        return
+    if (format == nc) {
+        res.set_content("Error: only netCDF files can be served.", "text/plain");
+        return;
+    }
+
     // Could be... jhrg 6/15/25
     // Get the DataAccess instance
     // DataAccess da = find_data_access(format);
@@ -91,5 +93,5 @@ void handle_dmr_request(const string &data_path, const httplib::Request& req, ht
 
     // send response headers, blank line
     // send response body
-    res.set_content(oss.str(), "text/plain");
+    res.set_content("Moof!", "text/plain");
 }

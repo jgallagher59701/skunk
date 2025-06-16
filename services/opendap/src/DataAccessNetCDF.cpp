@@ -3,7 +3,7 @@
 //
 
 #include <memory>
-#include <DMR.h>
+#include <libdap/DMR.h>
 
 #include "DataAccessNetCDF.h"
 
@@ -12,4 +12,5 @@ using namespace std;
 std::unique_ptr<libdap::DMR>
 DataAccessNetCDF::getDMR(const std::string &path, const std::string &ce, const std::string &func) {
     auto dmr = make_unique<libdap::DMR>();
+    return dmr;
 }

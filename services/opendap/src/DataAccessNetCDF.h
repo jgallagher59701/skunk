@@ -2,13 +2,13 @@
 // Created by James Gallagher on 5/27/25.
 //
 
-#ifndef DATAACCESS_H
-#define DATAACCESS_H
+#ifndef DATAACCESSNETCF_H
+#define DATAACCESSNETCF_H
 
 #include <string>
 #include <memory>
 
-#include <DMR.h>
+#include <libdap/DMR.h>
 
 #include "DataAccess.h"
 
@@ -27,7 +27,7 @@ class DMR;
  * The base class holds a reference to a MemoryCache instance that can be used
  * to cache binary DMR objects as well as other things.
  */
-class DataAccessNetCDF: DataAccess {
+class DataAccessNetCDF: public DataAccess {
 
 public:
     DataAccessNetCDF() = default;
@@ -38,7 +38,7 @@ public:
     DataAccessNetCDF& operator=(DataAccessNetCDF&&) noexcept = default;
     ~DataAccessNetCDF() override = default;
 
-    std::unique_ptr<libdap::DMR> getDMR(const std::string &path, const std::string &ce, const std::string &func) override;
+    virtual std::unique_ptr<libdap::DMR> getDMR(const std::string &path, const std::string &ce, const std::string &func);
 };
 
-#endif //DATAACCESS_H
+#endif //DATAACCESSNETCF_H

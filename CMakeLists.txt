@@ -32,8 +32,15 @@ ExternalProject_Get_Property(libdap4 install_dir)
 add_library(libdap STATIC IMPORTED GLOBAL)
 set_target_properties(libdap PROPERTIES
 		IMPORTED_LOCATION ${LIBDAP4_INSTALL_DIR}/lib/libdap.a
-		INTERFACE_INCLUDE_DIRECTORIES "$<BUILD_INTERFACE:${LIBDAP4_INSTALL_DIR}/include>"
+		# This still breaks things in service/opendap. Replaced with libdap_interface. jhrg 6/16/25
+		# INTERFACE_INCLUDE_DIRECTORIES "$<BUILD_INTERFACE:${LIBDAP4_INSTALL_DIR}/include>"
 )
+
+add_library(libdap_interface INTERFACE)
+target_include_directories(libdap_interface INTERFACE
+		"$<BUILD_INTERFACE:${LIBDAP4_INSTALL_DIR}/include>"
+)
+target_link_libraries(libdap_interface INTERFACE libdap)
 
 add_dependencies(libdap libdap4)
 
