@@ -11,12 +11,14 @@ add_library(httplib INTERFACE)
 target_include_directories(httplib INTERFACE external/cpp-httplib)
 
 # ─── External Dependencies ─────────────────────────────────────────
-if(NOT DEFINED ENV{prefix}) 	# NB: No $ENV{} here, but set 'set' below. jhrg 6/16/25
-	message(FATAL_ERROR "The environment variable 'prefix' is not set.")
+#if(NOT DEFINED ENV{prefix}) 	# NB: No $ENV{} here, but set 'set' below. jhrg 6/16/25
+#	set(LIBDAP_PREFIX "/Users/jimg/src/opendap/hyrax/build")
+#	message(FATAL_ERROR "The environment variable 'prefix' is not set. Using default: ${LIBDAP_PREFIX}")
+#else()
+#	set(LIBDAP_PREFIX $ENV{prefix})	# NB: Here use $ENV{} to access the value. Good grief. jhrg 6/16/25
+#endif()
 
-else()
-
-set(LIBDAP_PREFIX $ENV{prefix})	# NB: Here use $ENV{} to access the value. Good grief. jhrg 6/16/25
+set(LIBDAP_PREFIX "/Users/jimg/src/opendap/hyrax/build")
 message(STATUS "Using LIBDAP_PREFIX=${LIBDAP_PREFIX}")
 
 include_directories(${LIBDAP_PREFIX}/include)
@@ -34,7 +36,6 @@ set_target_properties(libdap PROPERTIES
 		INTERFACE_INCLUDE_DIRECTORIES ${LIBDAP_PREFIX}/include
 )
 
-endif()
 
 # Including libdap this way worked but on my machine failed at run-time
 # because I have other copies of these libraries from other builds. I
