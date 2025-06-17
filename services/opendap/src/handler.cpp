@@ -3,6 +3,10 @@
 //
 
 #include <string>
+#include <sys/stat.h>
+#include <ctime>
+#include <stdexcept>
+#include <iostream>
 #include <sstream>
 
 #include "handler.h"
@@ -55,8 +59,8 @@ data_format find_format(const string &data_path) {
 // nginx adds: Server, Date, Connection,
 // and Content-Length (modifies this, I think, because cpp-httplib sets it.)
 
-void set_response_headers(httplib::Response& res, const string &date) {
-    res.set_header("Cache-Control", "");
+void set_dmr_response_headers(httplib::Response& res, const string &date) {
+    res.set_header("Cache-Control", "public");
     res.set_header("Last-Modified", date);
     res.set_header("X-FRAME-OPTIONS", "DENY");
     res.set_header("XDODS-Server", "dods/3.2");
@@ -66,6 +70,23 @@ void set_response_headers(httplib::Response& res, const string &date) {
     res.set_header("Content-Type", "application/vnd.opendap.dap4.dataset-metadata+xml");
 }
 
+time_t get_last_modification_time(const string& filepath) {
+    struct stat file_info{};
+    if (stat(filepath.c_str(), &file_info) != 0) {
+        throw runtime_error("Unable to retrieve file info: " + filepath);
+    }
+    return file_info.st_mtime;
+}
+
+string format_http_date(time_t t) {
+    char buf[100];
+    tm tm{};
+    gmtime_r(&t, &tm);  // Thread-safe UTC conversion
+    if (strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S GMT", &tm) == 0) {
+        throw runtime_error("strftime failed");
+    }
+    return {buf};
+}
 #if 0
 unique_ptr<DataAccess>  find_data_access(const enum data_format &df) {
     switch (df) {
@@ -87,7 +108,11 @@ void handle_dmr_request(const string &data_path, const httplib::Request& req, ht
     if (format == nc) {
         DataAccessNetCDF format_handler;
         if (data_path.find("fnoc1.nc") != string::npos) {
-            res.set_content(format_handler.get_dmr_file(data_root + data_path + ".dmr"), "text/plain");
+            const auto full_data_path = data_root + data_path + ".dmr";
+            const auto lmt_date = format_http_date(get_last_modification_time(full_data_path));
+            set_dmr_response_headers(res, lmt_date);
+            res.set_content(format_handler.get_dmr_file(data_root + data_path + ".dmr"),
+                            "application/vnd.opendap.dap4.dataset-metadata+xml");
             return;
         }
 #if 0
