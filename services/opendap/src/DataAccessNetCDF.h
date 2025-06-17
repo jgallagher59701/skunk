@@ -38,7 +38,16 @@ public:
     DataAccessNetCDF& operator=(DataAccessNetCDF&&) noexcept = default;
     ~DataAccessNetCDF() override = default;
 
-    virtual std::unique_ptr<libdap::DMR> getDMR(const std::string &path, const std::string &ce, const std::string &func);
+#if 0
+
+    virtual std::unique_ptr<libdap::DMR> get_dmr(const std::string &path, const std::string &ce, const std::string &func);
+    virtual std::unique_ptr<libdap::DMR> get_dmr(const std::string &path, const std::string &ce, const std::string &func) {
+        return make_unique<libdap::DMR>()
+    }
+    virtual std::unique_ptr<libdap::DMR> get_dmr(const std::string &path, const std::string &ce) = 0;
+    virtual std::unique_ptr<libdap::DMR> get_dmr(const std::string &path) = 0;
+
+#endif
 };
 
 #endif //DATAACCESSNETCF_H

@@ -6,6 +6,7 @@
 #include <sstream>
 
 #include "handler.h"
+#include "DataAccessNetCDF.h"
 
 using namespace std;
 
@@ -58,10 +59,18 @@ void handle_dmr_request(const string &data_path, const httplib::Request& req, ht
     const auto function = req.has_param("dap4_function") ? req.get_param_value("dap4_function") : "";
 
     const auto format = find_format(data_path);
-
+    const string data_root = "/Users/jimg/src/opendap/skunk/services/opendap/src/";
     if (format == nc) {
-    	// send response headers, blank line
-    	// send response body
+        DataAccessNetCDF format_handler;
+        if (data_path.find("fnoc1.nc") != string::npos) {
+            res.set_content(format_handler.get_dmr_file(data_root + data_path + ".dmr"), "text/plain");
+            return;
+        }
+#if 0
+        auto dmr = format_handler.get_dmr("Moof!");
+        ostringstream oss;
+        dmr->print_dap4(oss);
+#endif
     	res.set_content("Moof!", "text/plain");
 		return;
 	}
