@@ -59,7 +59,7 @@ void handle_dmr_request(const string &data_path, const httplib::Request& req, ht
     const auto function = req.has_param("dap4_function") ? req.get_param_value("dap4_function") : "";
 
     const auto format = find_format(data_path);
-    const string data_root = "/Users/jimg/src/opendap/skunk/services/opendap/src/";
+    const string data_root = "/Users/jimg/src/opendap/skunk/services/opendap/src/"; // FIXME jhrg 6/16/25
     if (format == nc) {
         DataAccessNetCDF format_handler;
         if (data_path.find("fnoc1.nc") != string::npos) {
