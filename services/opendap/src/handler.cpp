@@ -42,6 +42,30 @@ data_format find_format(const string &data_path) {
     return unknown_format;
 }
 
+//Date: Tue, 17 Jun 2025 01:16:00 GMT
+//Server: Apache/2.4.56 (Unix)
+//X-FRAME-OPTIONS: DENY
+//Last-Modified: Thu, 23 Sep 2021 19:45:14 GMT
+//XDODS-Server: dods/3.2
+//XOPeNDAP-Server: asciival/, bes/, builddmrpp_module/, csv_handler/, dapreader_module/, dmrpp_module/, fileout_covjson/, fileout_json/, fileout_netcdf/, freeform_handler/, functions/, gateway/, gdal_module/, hdf4_handler/, hdf5_handler/, libdap/, ncml_moddule/, netcdf_handler/, ngap_module/, s3_reader/, usage/, w10n_handler/, xml_data_handler/
+//X-DAP: 3.2
+//Content-Description: application/vnd.opendap.dap4.dataset-metadata+xml
+//Content-Type: application/vnd.opendap.dap4.dataset-metadata+xml
+//
+// nginx adds: Server, Date, Connection,
+// and Content-Length (modifies this, I think, because cpp-httplib sets it.)
+
+void set_response_headers(httplib::Response& res) {
+    res.set_header("Cache-Control", "");
+    res.set_header("Last-Modified", "");
+    res.set_header("X-FRAME-OPTIONS", "DENY");
+    res.set_header("XDODS-Server", "dods/3.2");
+    res.set_header("X-DAP", "4.0");
+    res.set_header("XOPeNDAP-Server", "s-works");
+    res.set_header("Content-Description", "application/vnd.opendap.dap4.dataset-metadata+xml");
+    res.set_header("Content-Type", "application/vnd.opendap.dap4.dataset-metadata+xml");
+}
+
 #if 0
 unique_ptr<DataAccess>  find_data_access(const enum data_format &df) {
     switch (df) {
