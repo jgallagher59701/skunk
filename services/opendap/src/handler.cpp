@@ -55,9 +55,9 @@ data_format find_format(const string &data_path) {
 // nginx adds: Server, Date, Connection,
 // and Content-Length (modifies this, I think, because cpp-httplib sets it.)
 
-void set_response_headers(httplib::Response& res) {
+void set_response_headers(httplib::Response& res, const string &date) {
     res.set_header("Cache-Control", "");
-    res.set_header("Last-Modified", "");
+    res.set_header("Last-Modified", date);
     res.set_header("X-FRAME-OPTIONS", "DENY");
     res.set_header("XDODS-Server", "dods/3.2");
     res.set_header("X-DAP", "4.0");
