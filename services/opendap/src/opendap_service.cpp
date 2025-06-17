@@ -19,7 +19,7 @@ int main() {
     // Register exception handler
 
     // The DMR return
-    svr.Get(R"(/(.+)\.dmr)", [](const httplib::Request& req, httplib::Response& res) {
+    svr.Get(R"(/opendap/(.+)\.dmr)", [](const httplib::Request& req, httplib::Response& res) {
         // Extract parameters
         if (req.matches.empty()) {
             res.set_content("Error - no data path found", "text/plain");

@@ -34,8 +34,21 @@ public:
     DataAccess& operator=(DataAccess&&) noexcept = default;
     virtual ~DataAccess() = default;
 
-    virtual std::string get_dmr_file(const std::string &path, const std::string &ce, const std::string &func);
+    virtual std::string get_dmr_file(const std::string &path, const std::string &ce, const std::string &func) {
+        return "Not Implemented";
+    }
+    virtual std::string get_dmr_file(const std::string &path, const std::string &ce) {
+        return "Not Implemented";
+    }
+    virtual std::string get_dmr_file(const std::string &path);
+
+#if 0
+
     virtual std::unique_ptr<libdap::DMR> get_dmr(const std::string &path, const std::string &ce, const std::string &func) = 0;
+    virtual std::unique_ptr<libdap::DMR> get_dmr(const std::string &path, const std::string &ce) = 0;
+    virtual std::unique_ptr<libdap::DMR> get_dmr(const std::string &path) = 0;
+
+#endif
 };
 
 #endif //DATAACCESS_H

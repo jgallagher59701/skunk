@@ -26,6 +26,9 @@ void handle_dmr_request(const std::string &data_path, const httplib::Request& re
 
 std::string get_extension(const std::string& filename);
 data_format find_format(const std::string &data_path);
+void set_dmr_response_headers(httplib::Response& res, const std::string &date);
+time_t get_last_modification_time(const std::string& filepath);
+std::string format_http_date(time_t t);
 
 #if 0
 dap_response find_response(const std::string &data_path);

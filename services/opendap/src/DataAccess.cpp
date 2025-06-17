@@ -9,12 +9,12 @@
 
 using namespace std;
 
-string DataAccess::get_dmr_file(const std::string &path, const std::string &, const std::string &)
+string DataAccess::get_dmr_file(const std::string &path)
 {
     ifstream is;
     is.open(path, ios::binary);
 
-    if (!is)
+    if (!is.is_open())
         return {"Could not read DMR/XML file: " + path};
 
     // get length of the file
@@ -30,6 +30,8 @@ string DataAccess::get_dmr_file(const std::string &path, const std::string &, co
     // read data as a block:
     is.read(buffer.data(), length);
     is.close();
+
+    buffer.push_back('\0');
 
     return {buffer.data()};
 }
