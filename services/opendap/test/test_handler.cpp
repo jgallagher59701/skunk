@@ -1,37 +1,15 @@
-//
-// Created by James Gallagher on 6/5/25.
-//
 
-#include "handler.h"
+// Unit tests for hyrax handler functions
+
+#include <ctime>
+#include <sys/stat.h>
+
 #include <gtest/gtest.h>
 
-#if 0
-TEST(HandlerTest, HandlesRequestWithHeadersAndParams) {
-    httplib::Request req;
-    req.path = "/api/test";
-    req.headers = {
-            {"X-Test-Header", "test-value"},
-            {"User-Agent", "gtest-client"}
-    };
-    req.params = {
-            {"ce", "123"},
-            {"function", "echo"}
-    };
-    req.path_params = {
-            {"id", "42"}
-    };
+#include "httplib.h"
+#include "handler.h"
 
-    std::string output = handle_dmr_request(req);
-
-    EXPECT_NE(output.find("X-Test-Header: test-value"), std::string::npos);
-    EXPECT_NE(output.find("User-Agent: gtest-client"), std::string::npos);
-    EXPECT_NE(output.find("Path: /api/test"), std::string::npos);
-    EXPECT_NE(output.find("ce: 123"), std::string::npos);
-    EXPECT_NE(output.find("function: echo"), std::string::npos);
-    EXPECT_NE(output.find("id: 42"), std::string::npos);
-}
-
-#endif
+using namespace hyrax;
 
 TEST(FormatExtensionTest, HandlesNormalExtensions) {
     EXPECT_EQ(get_extension("file.txt"), ".txt");
@@ -68,3 +46,87 @@ TEST(FormatExtensionTest, HandlesEdgeCases) {
     EXPECT_EQ(get_extension("/path/."), ".");
     EXPECT_EQ(get_extension("just.a.dot."), ".");
 }
+// Test find_format()
+TEST(FindFormatTest, HandlesKnownFormat) {
+    EXPECT_EQ(find_format("data.nc"), nc);
+}
+
+TEST(FindFormatTest, HandlesUnknownFormat) {
+    EXPECT_EQ(find_format("data.txt"), unknown_format);
+    EXPECT_EQ(find_format("data"), unknown_format);
+    EXPECT_EQ(find_format("data.nc.extra"), unknown_format);
+}
+
+// Test format_http_date()
+TEST(FormatHttpDateTest, FormatsCorrectly) {
+    std::time_t known_time = 1718557715; // Example fixed time
+    std::string formatted = format_http_date(known_time);
+    EXPECT_EQ(formatted, "Sun, 16 Jun 2024 20:28:35 GMT");
+}
+
+TEST(FormatHttpDateTest, ThrowsOnInvalidInput) {
+    // Not directly testable easily, since strftime rarely fails unless the buffer is tiny
+    // Hence, we only do a smoke test here.
+    EXPECT_NO_THROW(format_http_date(0));
+}
+
+// Test get_last_modification_time()
+TEST(GetLastModificationTimeTest, HandlesExistingFile) {
+    const std::string filename = "CMakeLists.txt"; // assuming this file exists in the test dir
+    EXPECT_NO_THROW({
+                        auto mod_time = get_last_modification_time(filename);
+                        EXPECT_GT(mod_time, 0);
+                    });
+}
+
+TEST(GetLastModificationTimeTest, ThrowsOnMissingFile) {
+    const std::string filename = "nonexistent.file";
+    EXPECT_THROW(get_last_modification_time(filename), std::runtime_error);
+}
+
+// Test set_dmr_response_headers()
+TEST(SetDmrResponseHeadersTest, SetsAllHeaders) {
+    httplib::Response res;
+    std::string test_date = "Sun, 16 Jun 2024 20:28:35 GMT";
+
+    set_dmr_response_headers(res, test_date);
+
+    EXPECT_EQ(res.get_header_value("Cache-Control"), "public");
+    EXPECT_EQ(res.get_header_value("Last-Modified"), test_date);
+    EXPECT_EQ(res.get_header_value("X-FRAME-OPTIONS"), "DENY");
+    EXPECT_EQ(res.get_header_value("XDODS-Server"), "dods/3.2");
+    EXPECT_EQ(res.get_header_value("X-DAP"), "4.0");
+    EXPECT_EQ(res.get_header_value("XOPeNDAP-Server"), "s-works");
+    EXPECT_EQ(res.get_header_value("Content-Description"), "application/vnd.opendap.dap4.dataset-metadata+xml");
+    EXPECT_EQ(res.get_header_value("Content-Type"), "application/vnd.opendap.dap4.dataset-metadata+xml");
+}
+
+// handle_dmr_request() is complex and involves file operations and HTTP streaming.
+// Typically, this would require integration tests rather than pure unit tests.
+// However, we can at least test the behavior when file format is unknown.
+
+TEST(HandleDmrRequestTest, HandlesUnknownFormat) {
+    httplib::Request req;
+    httplib::Response res;
+
+    handle_dmr_request("unknown_format.xyz", req, res);
+
+    EXPECT_EQ(res.status, 200);
+    EXPECT_EQ(res.body, "Error: only netCDF files can be served.");
+    EXPECT_EQ(res.get_header_value("Content-Type"), "text/plain");
+}
+
+TEST(HandleDmrRequestTest, HandlesKnownNcFormatButMissingFile) {
+    httplib::Request req;
+    httplib::Response res;
+
+    // Assuming fnoc1.nc does NOT exist in the test directory
+    handle_dmr_request("fnoc1.nc", req, res);
+
+    EXPECT_EQ(res.status, 404);
+    EXPECT_EQ(res.body, "DMR file not found");
+    EXPECT_EQ(res.get_header_value("Content-Type"), "text/plain");
+}
+
+// Additional extensive testing of handle_dmr_request would typically involve mocks or fixtures
+// and thus would be integration-level testing.

@@ -83,3 +83,6 @@ set_target_properties(libdap PROPERTIES
 # ─── Project Subdirectories ────────────────────────────────────────
 add_subdirectory(services/opendap)
 add_subdirectory(services/teapot)
+
+# Adding this here enables 'make test' at the top level. jhrg 6/19/25
+enable_testing()
