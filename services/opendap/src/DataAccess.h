@@ -8,12 +8,14 @@
 #include <string>
 #include <memory>
 
+#include <libdap/DMR.h>
+
 namespace libdap {
 class DMR;
 }
 
 /**
- * @brief Subclass this for different types of data sources
+ * @brief Base class for different types of data sources
  *
  * This class provides an interface that builds a DAP4 DMR for the data source
  * referenced by a path, subject to a DAP4 constraint expression and server
@@ -34,6 +36,8 @@ public:
     DataAccess& operator=(DataAccess&&) noexcept = default;
     virtual ~DataAccess() = default;
 
+    ///@{
+    /// Get a DMR response as a string
     virtual std::string get_dmr_file(const std::string &path, const std::string &ce, const std::string &func) {
         return "Not Implemented";
     }
@@ -41,14 +45,20 @@ public:
         return "Not Implemented";
     }
     virtual std::string get_dmr_file(const std::string &path);
+    ///@}
 
-#if 0
-
-    virtual std::unique_ptr<libdap::DMR> get_dmr(const std::string &path, const std::string &ce, const std::string &func) = 0;
-    virtual std::unique_ptr<libdap::DMR> get_dmr(const std::string &path, const std::string &ce) = 0;
-    virtual std::unique_ptr<libdap::DMR> get_dmr(const std::string &path) = 0;
-
-#endif
+    ///@{
+    /// Get a DMR object
+    virtual std::unique_ptr<libdap::DMR> get_dmr(const std::string &path, const std::string &ce, const std::string &func){
+        return std::make_unique<libdap::DMR>();
+    }
+    virtual std::unique_ptr<libdap::DMR> get_dmr(const std::string &path, const std::string &ce) {
+        return std::make_unique<libdap::DMR>();
+    }
+    virtual std::unique_ptr<libdap::DMR> get_dmr(const std::string &path) {
+        return std::make_unique<libdap::DMR>();
+    }
+    ///@}
 };
 
 #endif //DATAACCESS_H

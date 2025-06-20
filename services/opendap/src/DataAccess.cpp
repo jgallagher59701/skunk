@@ -9,6 +9,7 @@
 
 using namespace std;
 
+/// This gem returns data from a file in a string.
 string DataAccess::get_dmr_file(const std::string &path)
 {
     ifstream is;
