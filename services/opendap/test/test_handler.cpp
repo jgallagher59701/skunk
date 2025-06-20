@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
 #include "httplib.h"
 #include "handler.h"
@@ -121,6 +122,19 @@ TEST(HandleDmrRequestTest, HandlesUnknownFormat) {
     EXPECT_EQ(res.body, "Error: only netCDF files can be served.");
     EXPECT_EQ(res.get_header_value("Content-Type"), "text/plain");
 }
+
+TEST(HandleDmrRequestTest, HandlesKnownNCFormatFormat) {
+    httplib::Request req;
+    httplib::Response res;
+
+    handle_dmr_request("fnoc1.nc", req, res);
+
+    EXPECT_EQ(res.status, 200);
+    EXPECT_THAT(res.file_content_path_, ::testing::HasSubstr("fnoc1.nc.dmr"));
+    EXPECT_EQ(res.get_header_value("Content-Type"), "application/vnd.opendap.dap4.dataset-metadata+xml");
+    EXPECT_EQ(res.headers.size(), 8);
+}
+
 
 TEST(HandleDmrRequestTest, HandlesKnownNcFormatButMissingFile) {
     httplib::Request req;
