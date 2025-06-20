@@ -59,9 +59,15 @@ TEST(FindFormatTest, HandlesUnknownFormat) {
 
 // Test format_http_date()
 TEST(FormatHttpDateTest, FormatsCorrectly) {
-    std::time_t known_time = 1718557715; // Example fixed time
+    std::time_t known_time = 0; // Example fixed time
     std::string formatted = format_http_date(known_time);
-    EXPECT_EQ(formatted, "Sun, 16 Jun 2024 20:28:35 GMT");
+    EXPECT_EQ(formatted, "Thu, 01 Jan 1970 00:00:00 GMT");
+}
+
+TEST(FormatHttpDateTest, FormatsCorrectlyEndTimes) {
+    std::time_t known_time = 0xFFFF'FFFF; // Example fixed time
+    std::string formatted = format_http_date(known_time);
+    EXPECT_EQ(formatted, "Sun, 07 Feb 2106 06:28:15 GMT");
 }
 
 TEST(FormatHttpDateTest, ThrowsOnInvalidInput) {
@@ -72,7 +78,7 @@ TEST(FormatHttpDateTest, ThrowsOnInvalidInput) {
 
 // Test get_last_modification_time()
 TEST(GetLastModificationTimeTest, HandlesExistingFile) {
-    const std::string filename = "CMakeLists.txt"; // assuming this file exists in the test dir
+    const std::string filename = "."; // this file always exists in the CWD
     EXPECT_NO_THROW({
                         auto mod_time = get_last_modification_time(filename);
                         EXPECT_GT(mod_time, 0);
