@@ -126,11 +126,11 @@ TEST(HandleDmrRequestTest, HandlesKnownNcFormatButMissingFile) {
     httplib::Request req;
     httplib::Response res;
 
-    // Assuming fnoc1.nc does NOT exist in the test directory
-    handle_dmr_request("fnoc1.nc", req, res);
+    // Assuming xxx.xyz does NOT exist in the test directory
+    handle_dmr_request("xxx.nc", req, res);
 
     EXPECT_EQ(res.status, 404);
-    EXPECT_EQ(res.body, "DMR file not found");
+    EXPECT_EQ(res.body, "File not found. Moof!");
     EXPECT_EQ(res.get_header_value("Content-Type"), "text/plain");
 }
 
