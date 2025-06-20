@@ -145,7 +145,8 @@ void handle_dmr_request(const string &data_path, const httplib::Request &req, ht
             const auto full_data_path = data_root + data_path + ".dmr";
             const auto lmt_date = format_http_date(get_last_modification_time(full_data_path));
             set_dmr_response_headers(res, lmt_date);
-#if 0
+#if 1
+            res.status = 200;
             res.set_file_content(full_data_path, "application/vnd.opendap.dap4.dataset-metadata+xml");
 #else
             // Cannot use a unique_ptr here; those are not copyable. jhrg 6/19/25
@@ -180,10 +181,12 @@ void handle_dmr_request(const string &data_path, const httplib::Request &req, ht
             return;
         }
 
-        res.set_content("Moof!", "text/plain");
+        res.status = 404;
+        res.set_content("File not found. Moof!", "text/plain");
         return;
     }
 
+    res.status = 200;
     res.set_content("Error: only netCDF files can be served.", "text/plain");
 }
 
