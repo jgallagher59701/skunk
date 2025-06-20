@@ -11,6 +11,6 @@ using namespace std;
 
 
 std::unique_ptr<libdap::DMR> get_dmr(const std::string &path, const std::string &ce, const std::string &func) {
-    auto dmr = make_unique<libdap::DMR>();
+    auto dmr= make_unique<libdap::DMR>();
     return dmr;
 }
