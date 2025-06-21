@@ -1,3 +1,10 @@
+
+# Tell CMake to search here first for config files or libraries:
+set(CMAKE_PREFIX_PATH
+		"/Users/jimg/src/opendap/hyrax_git/build/deps"
+		${CMAKE_PREFIX_PATH}
+)
+
 add_executable(opendap)
 
 # made these a local library for testing, but I'm not sure that's needed.
@@ -22,8 +29,14 @@ target_sources(opendap PRIVATE
 
 target_link_libraries(opendap PRIVATE
         handler
+		# netcdf Once this works. jhrg 6/21/25
         httplib  # assuming header-only httplib as an INTERFACE target
 )
+
+add_subdirectory(src/netcdf)
+
+# Once the library builds and is useful
+# target_link_libraries(your_executable PRIVATE netcdf)
 
 # Add GoogleTest
 enable_testing()
