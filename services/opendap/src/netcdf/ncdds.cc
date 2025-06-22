@@ -54,7 +54,7 @@
 #include <libdap/mime_util.h>
 #include <libdap/util.h>
 
-#include "NCRequestHandler.h"
+#include "DataAccessNetCDF.h"
 #include "nc_util.h"
 
 #include "NCInt32.h"
@@ -85,7 +85,7 @@ build_scalar(const string &varname, const string &dataset, nc_type datatype)
             return (new NCStr(varname, dataset));
 
         case NC_BYTE:
-            if (NCRequestHandler::get_promote_byte_to_short()) {
+            if (DataAccessNetCDF::get_promote_byte_to_short()) {    // get_promote_byte_to_short is always false. 6/22/25
                 return (new NCInt16(varname, dataset));
             }
             else {
@@ -118,7 +118,7 @@ build_scalar(const string &varname, const string &dataset, nc_type datatype)
 #if NETCDF_VERSION >= 4
         case NC_INT64:
         case NC_UINT64:
-            if (NCRequestHandler::get_ignore_unknown_types())
+            if (DataAccessNetCDF::get_ignore_unknown_types())
                 cerr << "The netCDF handler does not currently support 64 bit integers.";
             else
                 throw Error("The netCDF handler does not currently support 64 bit integers.");
@@ -131,19 +131,6 @@ build_scalar(const string &varname, const string &dataset, nc_type datatype)
 
     return 0;
 }
-
-#if 0
-// Replaced by code in nc_util.cc. jhrg 2/9/12
-
-static bool is_user_defined(nc_type type)
-{
-#if NETCDF_VERSION >= 4
-    return type >= NC_FIRSTUSERTYPEID;
-#else
-    return false;
-#endif
-}
-#endif
 
 /** Build a grid given that one has been found. The Grid's Array is already
     allocated and is passed in along with a number of arrays containing
@@ -265,7 +252,7 @@ static BaseType *build_user_defined(int ncid, int varid, nc_type xtype, const st
         }
 
         case NC_VLEN:
-            if (NCRequestHandler::get_ignore_unknown_types()) {
+            if (DataAccessNetCDF::get_ignore_unknown_types()) {
                 cerr << "in build_user_defined; found a vlen." << endl;
                 return 0;
             }
@@ -452,7 +439,7 @@ static bool is_grid(int ncid, int var, int ndims, const int dim_ids[MAX_VAR_DIMS
 
 static bool is_dimension(const string &name, vector<string> maps)
 {
-    vector<string>::iterator i = find(maps.begin(), maps.end(), name);
+    auto i = find(maps.begin(), maps.end(), name);
     if (i != maps.end())
         return true;
     else
@@ -494,13 +481,13 @@ static NCArray *build_array(BaseType *bt, int ncid, int var,
  */
 static void read_variables(DDS &dds_table, const string &filename, int ncid, int nvars)
 {
-    // How this function works: The variables are scanned once but because
+    // How this function works: The variables are scanned once, but because
     // netCDF includes shared dimensions as variables there are two versions
     // of this function. One writes out the variables as they are found while
     // the other writes scalars and Grids as they are found and saves Arrays
-    // for output last. Then, when writing the arrays, it checks to see if
+    // for output last. When writing the arrays, it checks to see if
     // an array variable is also a grid dimension and, if so, does not write
-    // it out (thus in the second version of the function, all arrays appear
+    // it out. Thus, in the second version of the function, all arrays appear
     // after the other variable types and only those arrays that do not
     // appear as Grid Maps are included.
 
@@ -532,12 +519,9 @@ static void read_variables(DDS &dds_table, const string &filename, int ncid, int
         // a scalar? NB a one-dim NC_CHAR array will have DAP type of
         // dods_str_c because it's really a scalar string, not an array.
         if (is_user_defined_type(ncid, nctype)) {
-	    // is_user_defined(nctype)) {
-#if NETCDF_VERSION >= 4
             BaseType *bt = build_user_defined(ncid, varid, nctype, filename, ndims, dim_ids);
             dds_table.add_var(bt);
             delete bt;
-#endif
         }
         else if (ndims == 0 || (ndims == 1 && nctype == NC_CHAR)) {
             BaseType *bt = build_scalar(name, filename, nctype);
@@ -554,7 +538,7 @@ static void read_variables(DDS &dds_table, const string &filename, int ncid, int
             delete gr;
         }
         else {
-            if (!NCRequestHandler::get_show_shared_dims()) {
+            if (!DataAccessNetCDF::get_show_shared_dims()) { // get_show_shared_dims is now false by default. 6/22/25
                 array_vars.push_back(varid);
             } else {
                 BaseType *bt = build_scalar(name, filename, nctype);
@@ -571,7 +555,7 @@ static void read_variables(DDS &dds_table, const string &filename, int ncid, int
     // var ids of things that look like simple arrays onto a vector. This code
     // will add all of those that really are arrays and not the ones that are
     // dimensions used by a Grid.
-    if (!NCRequestHandler::get_show_shared_dims()) {
+    if (!DataAccessNetCDF::get_show_shared_dims()) { // get_show_shared_dims is now false by default. 6/22/25
         // Now just loop through the saved array variables, writing out only
         // those that are not Grid Maps
         nvars = array_vars.size();

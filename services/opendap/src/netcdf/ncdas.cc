@@ -56,9 +56,12 @@
 #include <libdap/escaping.h>
 #include <libdap/DAS.h>
 
+#if 0
 #include <BESDebug.h>
-
 #include "NCRequestHandler.h"
+#endif
+
+#include "DataAccessNetCDF.h"
 #include "nc_util.h"
 
 #define ATTR_STRING_QUOTE_FIX 1
@@ -103,7 +106,7 @@ static string print_attr(nc_type type, int loc, void *vals)
         return rep.str();
 
     case NC_BYTE:
-        if (NCRequestHandler::get_promote_byte_to_short()) {
+        if (DataAccessNetCDF::get_promote_byte_to_short()) {
             signed char sc;
             gp.cp = (char *) vals;
 
@@ -201,7 +204,7 @@ static string print_attr(nc_type type, int loc, void *vals)
     }
 
     default:
-        if (NCRequestHandler::get_ignore_unknown_types())
+        if (DataAccessNetCDF::get_ignore_unknown_types())
             cerr << "The netcdf handler tried to print an attribute that has an unrecognized type. (1)" << endl;
         else
             throw InternalErr(__FILE__, __LINE__, "The netcdf handler tried to print an attribute that has an unrecognized type. (1)");
@@ -228,7 +231,7 @@ static string print_type(nc_type datatype)
         return "Byte";
 
     case NC_BYTE:
-        if (NCRequestHandler::get_promote_byte_to_short()) {
+        if (DataAccessNetCDF::get_promote_byte_to_short()) {
             return "Int16";
         }
         else {
@@ -274,7 +277,7 @@ static string print_type(nc_type datatype)
         return "NC_ENUM";
 
     default:
-        if (NCRequestHandler::get_ignore_unknown_types())
+        if (DataAccessNetCDF::get_ignore_unknown_types())
             cerr << "The netcdf handler tried to print an attribute that has an unrecognized type. (2)" << endl;
         else
             throw InternalErr(__FILE__, __LINE__, "The netcdf handler tried to print an attribute that has an unrecognized type. (2)");
@@ -328,8 +331,6 @@ static void append_values(int ncid, int v, int len, nc_type datatype, char *attr
  */
 static void read_attributes_netcdf4(int ncid, int varid, int natts, AttrTable *at)
 {
-    BESDEBUG(MODULE, prolog << "In read_attributes_netcdf4" << endl);
-
     for (int attr_num = 0; attr_num < natts; ++attr_num) {
         int errstat = NC_NOERR;
         // Get the attribute name
@@ -343,8 +344,6 @@ static void read_attributes_netcdf4(int ncid, int varid, int natts, AttrTable *a
         errstat = nc_inq_att(ncid, varid, attrname, &datatype, &len);
         if (errstat != NC_NOERR) throw Error(errstat, "Could not get the name for attribute '" + string(attrname) + "'");
 
-        BESDEBUG(MODULE, prolog << "nc_inq_att returned datatype = " << datatype << " for '" << attrname << "'" << endl);
-
         if (datatype >= NC_FIRSTUSERTYPEID) {
             char type_name[NC_MAX_NAME + 1];
             size_t size;
@@ -355,7 +354,6 @@ static void read_attributes_netcdf4(int ncid, int varid, int natts, AttrTable *a
             if (errstat != NC_NOERR)
                 throw(InternalErr(__FILE__, __LINE__, "Could not get information about a user-defined type (" + long_to_string(errstat) + ")."));
 
-            BESDEBUG(MODULE, prolog << "Before switch(class_type)" << endl);
             switch (class_type) {
             case NC_COMPOUND: {
                 // Make recursive attrs work?
@@ -376,7 +374,7 @@ static void read_attributes_netcdf4(int ncid, int varid, int natts, AttrTable *a
             }
 
             case NC_VLEN:
-                if (NCRequestHandler::get_ignore_unknown_types())
+                if (DataAccessNetCDF::get_ignore_unknown_types())
                     cerr << "in build_user_defined; found a vlen." << endl;
                 else
                     throw Error("The netCDF handler does not yet support the NC_VLEN type.");
@@ -416,7 +414,6 @@ static void read_attributes_netcdf4(int ncid, int varid, int natts, AttrTable *a
                 throw InternalErr(__FILE__, __LINE__, "Expected one of NC_COMPOUND, NC_VLEN, NC_OPAQUE or NC_ENUM");
             }
 
-            BESDEBUG(MODULE, prolog << "After switch(class-type)" << endl);
         }
         else {
             switch (datatype) {
@@ -430,9 +427,7 @@ static void read_attributes_netcdf4(int ncid, int varid, int natts, AttrTable *a
             case NC_UBYTE:
             case NC_USHORT:
             case NC_UINT:
-                BESDEBUG(MODULE, prolog << "Before append_values ..." << endl);
                 append_values(ncid, varid, len, datatype, attrname, at);
-                BESDEBUG(MODULE, prolog << "After append_values ..." << endl);
                 break;
 
             case NC_INT64:
@@ -454,7 +449,6 @@ static void read_attributes_netcdf4(int ncid, int varid, int natts, AttrTable *a
             }
         }
     }
-    BESDEBUG(MODULE, prolog << "Exiting read_attributes_netcdf4" << endl);
 }
 
 /** Given a reference to an instance of class DAS and a filename that refers
@@ -468,8 +462,6 @@ static void read_attributes_netcdf4(int ncid, int varid, int natts, AttrTable *a
  */
 void nc_read_dataset_attributes(DAS &das, const string &filename)
 {
-    BESDEBUG(MODULE, prolog << "In nc_read_dataset_attributes" << endl);
-
     int ncid, errstat;
     errstat = nc_open(filename.c_str(), NC_NOWRITE, &ncid);
     if (errstat != NC_NOERR) throw Error(errstat, "NetCDF handler: Could not open " + filename + ".");
@@ -484,7 +476,6 @@ void nc_read_dataset_attributes(DAS &das, const string &filename)
     int natts = 0;
     nc_type var_type;
     for (int varid = 0; varid < nvars; ++varid) {
-        BESDEBUG(MODULE, prolog << "Top of for loop; for each var..." << endl);
 
         errstat = nc_inq_var(ncid, varid, varname, &var_type, (int*) 0, (int*) 0, &natts);
         if (errstat != NC_NOERR) throw Error(errstat, "Could not get information for variable: " + long_to_string(varid));
@@ -550,7 +541,7 @@ void nc_read_dataset_attributes(DAS &das, const string &filename)
                 // If the base type is a 64-bit int, bail with an error or
                 // a message about unsupported types
                 if (base_nc_type == NC_INT64 || base_nc_type == NC_UINT64) {
-                    if (NCRequestHandler::get_ignore_unknown_types())
+                    if (DataAccessNetCDF::get_ignore_unknown_types())
                         cerr << "An Enum uses 64-bit integers, but this handler does not support that type." << endl;
                     else
                         throw Error("An Enum uses 64-bit integers, but this handler does not support that type.");
@@ -579,8 +570,6 @@ void nc_read_dataset_attributes(DAS &das, const string &filename)
         }
     }
 
-    BESDEBUG(MODULE, prolog << "Starting global attributes" << endl);
-
     // global attributes
     if (ngatts > 0) {
         AttrTable *attr_table_ptr = das.add_table("NC_GLOBAL", new AttrTable);
@@ -602,6 +591,4 @@ void nc_read_dataset_attributes(DAS &das, const string &filename)
     }
 
     if (nc_close(ncid) != NC_NOERR) throw InternalErr(__FILE__, __LINE__, "NetCDF handler: Could not close the dataset!");
-
-    BESDEBUG(MODULE, prolog << "Exiting nc_read_dataset_attributes" << endl);
 }

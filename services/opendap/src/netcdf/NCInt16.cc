@@ -43,7 +43,7 @@ static char rcsid[] not_used ={"$Id$"};
 #include <netcdf.h>
 #include <libdap/InternalErr.h>
 
-#include "NCRequestHandler.h"
+#include "DataAccessNetCDF.h"
 #include "NCInt16.h"
 
 
@@ -105,7 +105,7 @@ bool NCInt16::read() {
         throw Error(errstat, string("Could not read information about the variable `") + name() + string("'."));
     }
 
-    if (NCRequestHandler::get_promote_byte_to_short()) {
+    if (DataAccessNetCDF::get_promote_byte_to_short()) {
         if (datatype != NC_SHORT && datatype != NC_BYTE)
             throw InternalErr(__FILE__, __LINE__, "Entered NCInt16::read() with non-Int16 or Byte variable (NC.PromoteByteToShort set)!");
     }
@@ -118,7 +118,7 @@ bool NCInt16::read() {
         cor[id] = 0;
     }
 
-    if (NCRequestHandler::get_promote_byte_to_short()) {
+    if (DataAccessNetCDF::get_promote_byte_to_short()) {
         signed char tmp;
         errstat = nc_get_var1_schar(ncid,varid, cor, &tmp);
         sht =(short)tmp;

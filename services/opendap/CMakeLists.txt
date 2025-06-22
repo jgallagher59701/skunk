@@ -1,9 +1,14 @@
 
 # Tell CMake to search here first for config files or libraries:
-set(CMAKE_PREFIX_PATH
-		"/Users/jimg/src/opendap/hyrax_git/build/deps"
-		${CMAKE_PREFIX_PATH}
-)
+#set(CMAKE_PREFIX_PATH
+#		/Users/jimg/src/opendap/hyrax_git/build/deps
+#		${CMAKE_PREFIX_PATH}
+#)
+
+find_path(NC_INCLUDE_DIR netcdf.h
+		HINTS /Users/jimg/src/opendap/hyrax_git/build/deps/include)
+find_library(NC_LIB netcdf
+		HINTS /Users/jimg/src/opendap/hyrax_git/build/deps/lib)
 
 add_executable(opendap)
 
@@ -12,7 +17,6 @@ add_executable(opendap)
 add_library(handler
         src/handler.cpp
         src/DataAccess.cpp
-        src/DataAccessNetCDF.cpp
 )
 
 target_link_libraries(handler PRIVATE
@@ -20,6 +24,7 @@ target_link_libraries(handler PRIVATE
 		# replace 'libdap' below with 'libdap_interface' for the 'wrapped'
 		# version of the library. jhrg 6/16/25
 		libdap
+		# netcdf_support
         httplib  # assuming header-only httplib as an INTERFACE target
 )
 
@@ -29,10 +34,11 @@ target_sources(opendap PRIVATE
 
 target_link_libraries(opendap PRIVATE
         handler
-		# netcdf Once this works. jhrg 6/21/25
         httplib  # assuming header-only httplib as an INTERFACE target
 )
 
+# Code in subdirs of opendap/src (e.g., netcdf) needs this path. 6/22/25
+set(OPENDAP_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_subdirectory(src/netcdf)
 
 # Once the library builds and is useful
