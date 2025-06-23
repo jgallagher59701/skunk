@@ -139,7 +139,8 @@ build_scalar(const string &varname, const string &dataset, nc_type datatype)
     Note: The dim_szs and dim_nms arrays could be removed since that information
     is already in the Array ar. */
 static Grid *build_grid(Array *ar, int ndims, const nc_type array_type,
-        const char map_names[MAX_NC_VARS][MAX_NC_NAME],
+        //const char map_names[MAX_NC_VARS][MAX_NC_NAME],
+        std::vector<std::array<char, MAX_NC_NAME>> &map_names,
         const nc_type map_types[MAX_NC_VARS],
         const size_t map_sizes[MAX_VAR_DIMS],
         vector<string> *all_maps)
@@ -150,9 +151,9 @@ static Grid *build_grid(Array *ar, int ndims, const nc_type array_type,
         --ndims;
 
     for (int d = 0; d < ndims; ++d) {
-        ar->append_dim(map_sizes[d], map_names[d]);
+        ar->append_dim(map_sizes[d], map_names[d].data());
         // Save the map names for latter use, which might not happen...
-        all_maps->push_back(string(map_names[d]));
+        all_maps->emplace_back(map_names[d].data());
     }
 
     const string &filename = ar->dataset();
@@ -161,10 +162,10 @@ static Grid *build_grid(Array *ar, int ndims, const nc_type array_type,
 
     // Build and add BaseType/Array instances for the maps
     for (int d = 0; d < ndims; ++d) {
-        BaseType *local_bt = build_scalar(map_names[d], filename, map_types[d]);
+        BaseType *local_bt = build_scalar(map_names[d].data(), filename, map_types[d]);
         NCArray *local_ar = new NCArray(local_bt->name(), filename, local_bt);
         delete local_bt;
-        local_ar->append_dim(map_sizes[d], map_names[d]);
+        local_ar->append_dim(map_sizes[d], map_names[d].data());
         gr->add_var(local_ar, maps);
         delete local_ar;
     }
@@ -405,7 +406,8 @@ static bool find_matching_coordinate_variable(int ncid, int var,
  */
 static bool is_grid(int ncid, int var, int ndims, const int dim_ids[MAX_VAR_DIMS],
         size_t map_sizes[MAX_VAR_DIMS],
-        char map_names[MAX_NC_VARS][MAX_NC_NAME],
+        //char map_names[MAX_NC_VARS][MAX_NC_NAME],
+        std::vector<std::array<char, MAX_NC_NAME>> &map_names,
         nc_type map_types[MAX_NC_VARS])
 {
     // Look at each dimension of the variable.
@@ -426,7 +428,7 @@ static bool is_grid(int ncid, int var, int ndims, const int dim_ids[MAX_VAR_DIMS
         if (find_matching_coordinate_variable(ncid, var, dimname, dim_sz, &match_type)) {
             map_types[d] = match_type;
             map_sizes[d] = dim_sz;
-            strncpy(map_names[d], dimname, MAX_NC_NAME - 1);
+            strncpy(map_names[d].data(), dimname, MAX_NC_NAME - 1);
             map_names[d][MAX_NC_NAME - 1] = '\0';
         }
         else {
@@ -513,7 +515,8 @@ static void read_variables(DDS &dds_table, const string &filename, int ncid, int
         // These are defined here because they are value-result parameters for
         // is_grid() called below.
         size_t map_sizes[MAX_VAR_DIMS];
-        char map_names[MAX_NC_VARS][MAX_NC_NAME];
+        // char map_names[MAX_NC_VARS][MAX_NC_NAME];
+        std::vector<std::array<char, MAX_NC_NAME>> map_names(ndims);
         nc_type map_types[MAX_NC_VARS];
 
         // a scalar? NB a one-dim NC_CHAR array will have DAP type of
