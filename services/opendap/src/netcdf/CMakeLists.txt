@@ -7,7 +7,7 @@ target_sources(netcdf_support PRIVATE
         NCByte.cc		NCInt16.cc		NCStructure.cc
         NCInt32.cc		NCUInt16.cc     NCUInt32.cc
         NCFloat32.cc    NCFloat64.cc	NCSequence.cc
-        NCUrl.cc
+        NCUrl.cc        DataAccessNetCDF.cpp
 )
 
 # Set in the top-level CMakeLists file. jhrg 6/21/25
@@ -20,7 +20,7 @@ target_sources(netcdf_support PRIVATE
 #        HINTS /Users/jimg/src/opendap/hyrax_git/build/deps/include )
 #find_library(NC_LIB netcdf
 #        HINTS /Users/jimg/src/opendap/hyrax_git/build/deps/lib )
-
+message(STATUS "NC_LIB: ${NC_LIB}")
 target_include_directories(netcdf_support PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${OPENDAP_SRC}
@@ -30,7 +30,7 @@ target_include_directories(netcdf_support PUBLIC
 # Link against the NetCDF library
 target_link_libraries(netcdf_support
         PUBLIC
-        NC_LIB                       # creates an imported target
+        ${NC_LIB}                       # creates an imported target
 )
 
 # Optionally propagate any compile definitions NetCDF needs

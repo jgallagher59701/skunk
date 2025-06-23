@@ -34,7 +34,10 @@ std::unique_ptr<DMR> DataAccessNetCDF::get_dmr(const std::string &path, const st
 
     DAS das;
     nc_read_dataset_attributes(das, path);
+#if 0
+    // FIXME - find this. 6/22/25
     Ancillary::read_ancillary_das(das, path);
+#endif
 
     dds.transfer_attributes(&das);
 

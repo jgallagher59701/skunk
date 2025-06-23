@@ -8,9 +8,13 @@
 #include <ctime>
 #include <stdexcept>
 #include <memory>
+#include <unistd.h>
+
+#include <libdap/DMR.h>
 
 #include "handler.h"
 #include "DataAccess.h"
+#include "DataAccessNetCDF.h"
 
 using namespace std;
 
@@ -18,7 +22,7 @@ namespace hyrax {
 
 ///@{
 /// Those should be configuration params in a real server. jhrg 6/19/25
-const string data_root = "/Users/jimg/src/opendap/skunk/services/opendap/src/"; // FIXME jhrg 6/16/25
+const string data_root = "/Users/jimg/src/opendap/skunk/services/opendap/src/netcdf/data/"; // FIXME jhrg 6/16/25
 constexpr size_t BUF_SIZE = 65536;
 ///@}
 
@@ -141,15 +145,53 @@ void handle_dmr_request(const string &data_path, const httplib::Request &req, ht
 
     const auto format = find_format(data_path);
     if (format == nc) {
-        if (data_path.find("fnoc1.nc") != string::npos) {
+        // Does the data file exist?
+        const auto full_data_path = data_root + data_path;
+        if (access(full_data_path.c_str(), F_OK | R_OK) != 0) {
+            res.status = 404;
+            res.set_content("File not found. Moof!", "text/plain");
+            return;
+        }
+
+        const auto lmt_date = format_http_date(get_last_modification_time(full_data_path));
+
+        DataAccessNetCDF da;
+        try {
+            auto dmr = da.get_dmr(full_data_path, "", "");
+            res.status = 200;
+            libdap::XMLWriter xml;
+            dmr->print_dap4(xml, false);
+            auto response_size = xml.get_doc_size();
+            auto response = xml.get_doc();
+            res.set_content(response, response_size, "application/vnd.opendap.dap4.dataset-metadata+xml");
+            return;
+        }
+        catch (const libdap::Error &e) {
+            res.status = 500;   // Improve this. 6/22/25
+            res.set_content("Moof! Server error: " + e.get_error_message(), "text/plain");
+            return;
+        }
+    }
+
+    res.status = 200;
+    res.set_content("Error: only netCDF files can be served.", "text/plain");
+}
+
+}
+
+#if 0
+if (data_path.find("fnoc1.nc") != string::npos) {
             const auto full_data_path = data_root + data_path + ".dmr";
             const auto lmt_date = format_http_date(get_last_modification_time(full_data_path));
             set_dmr_response_headers(res, lmt_date);
-#if 1
-            res.status = 200;
+#endif
+
+#if 0
+res.status = 200;
             res.set_file_content(full_data_path, "application/vnd.opendap.dap4.dataset-metadata+xml");
-#else
-            // Cannot use a unique_ptr here; those are not copyable. jhrg 6/19/25
+#endif
+#if 0
+// Cannot use a unique_ptr here; those are not copyable. jhrg 6/19/25
             auto file = std::make_shared<std::ifstream>(full_data_path, std::ios::binary | std::ios::ate);
             if (!file->is_open()) {
                 res.status = 404;
@@ -172,22 +214,8 @@ void handle_dmr_request(const string &data_path, const httplib::Request &req, ht
                 return true; // continue sending
             });
 #endif
-
 #if 0
-            DataAccessNetCDF format_handler;
+DataAccessNetCDF format_handler;
             res.set_content(format_handler.get_dmr_file(full_data_path),
                             "application/vnd.opendap.dap4.dataset-metadata+xml");
 #endif
-            return;
-        }
-
-        res.status = 404;
-        res.set_content("File not found. Moof!", "text/plain");
-        return;
-    }
-
-    res.status = 200;
-    res.set_content("Error: only netCDF files can be served.", "text/plain");
-}
-
-}

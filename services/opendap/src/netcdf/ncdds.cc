@@ -482,7 +482,7 @@ static NCArray *build_array(BaseType *bt, int ncid, int var,
 static void read_variables(DDS &dds_table, const string &filename, int ncid, int nvars)
 {
     // How this function works: The variables are scanned once, but because
-    // netCDF includes shared dimensions as variables there are two versions
+    // netCDF includes shared dimensions as variables, there are two versions
     // of this function. One writes out the variables as they are found while
     // the other writes scalars and Grids as they are found and saves Arrays
     // for output last. When writing the arrays, it checks to see if
@@ -492,7 +492,7 @@ static void read_variables(DDS &dds_table, const string &filename, int ncid, int
     // appear as Grid Maps are included.
 
     // These two vectors are used to record the ids of array variables and
-    // the names of all of the Grid Map variables
+    // the names of all the Grid Map variables
     vector<int> array_vars;
     vector<string> all_maps;
 

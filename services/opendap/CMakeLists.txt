@@ -10,7 +10,12 @@ find_path(NC_INCLUDE_DIR netcdf.h
 find_library(NC_LIB netcdf
 		HINTS /Users/jimg/src/opendap/hyrax_git/build/deps/lib)
 
+message(STATUS "NC_LIB: ${NC_LIB}")
+
 add_executable(opendap)
+
+include_directories(src)
+include_directories(src/netcdf)
 
 # made these a local library for testing, but I'm not sure that's needed.
 # jhrg 6/16/25
@@ -24,7 +29,7 @@ target_link_libraries(handler PRIVATE
 		# replace 'libdap' below with 'libdap_interface' for the 'wrapped'
 		# version of the library. jhrg 6/16/25
 		libdap
-		# netcdf_support
+		netcdf_support
         httplib  # assuming header-only httplib as an INTERFACE target
 )
 
@@ -38,7 +43,7 @@ target_link_libraries(opendap PRIVATE
 )
 
 # Code in subdirs of opendap/src (e.g., netcdf) needs this path. 6/22/25
-set(OPENDAP_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+# set(OPENDAP_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_subdirectory(src/netcdf)
 
 # Once the library builds and is useful
@@ -47,8 +52,6 @@ add_subdirectory(src/netcdf)
 # Add GoogleTest
 enable_testing()
 find_package(GTest REQUIRED)
-
-include_directories(src)
 
 add_executable(test_handler test/test_handler.cpp)
 target_link_libraries(test_handler handler httplib GTest::GTest GTest::Main pthread)
