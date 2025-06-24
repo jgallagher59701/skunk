@@ -2,7 +2,7 @@
 add_library(netcdf_support STATIC)
 
 target_sources(netcdf_support PRIVATE
-        nc_util.cc		ncdas.cc        ncdds.cc
+        nc_util.cc		ncdas.cc        new_ncdds.cc
         NCArray.cc		NCGrid.cc		NCStr.cc
         NCByte.cc		NCInt16.cc		NCStructure.cc
         NCInt32.cc		NCUInt16.cc     NCUInt32.cc
