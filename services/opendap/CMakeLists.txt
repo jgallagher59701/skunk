@@ -47,9 +47,11 @@ target_sources(opendap PRIVATE
 
 target_link_libraries(opendap PUBLIC
         handler
-		netcdf_support
-		${NC_LIB}
-        httplib  # assuming header-only httplib as an INTERFACE target
+		# These are inherited from handler's target_link_libraries above
+		# because it uses PUBLIC. 6/24/25 jhrg
+		# netcdf_support
+		# ${NC_LIB}
+        # httplib  # assuming header-only httplib as an INTERFACE target
 )
 
 # Add GoogleTest
