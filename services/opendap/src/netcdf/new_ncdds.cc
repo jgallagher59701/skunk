@@ -64,7 +64,6 @@
 #include "NCStructure.h"
 
 #include "DataAccessNetCDF.h"
-#include "nc_util.h"
 
 #include <array>
 #include <vector>
@@ -269,8 +268,6 @@ inline bool is_dimension(const std::string &name, const std::vector<std::string>
     return std::find(maps.begin(), maps.end(), name) != maps.end();
 }
 
-// Modern build_array returning a raw pointer (caller takes ownership)
-// Modern build_array returning unique_ptr<NCArray>
 inline std::unique_ptr<NCArray> build_array(BaseType *bt, int ncid, int varid, nc_type type, int ndims, const int *dim_ids)
 {
     auto ar = std::make_unique<NCArray>(bt->name(), bt->dataset(), bt);
@@ -323,34 +320,31 @@ void read_all_variables(DDS &dds, const std::string &filename, int ncid, int nva
     }
 }
 
-/** Given a reference to an instance of class DDS and a filename that refers
-    to a netcdf file, read the netcdf file and extract all the dimensions of
-    each of its variables. Add the variables and their dimensions to the
-    instance of DDS.
-
-    @param elide_dimension_arrays If true, don't include an array if it's
-    really a dimension used by a Grid. */
+/**
+ * @brief Build a DDS for a netCDF file
+ *
+ * Given a reference to an instance of class DDS and a filename that refers
+ * to a netcdf file, read the netcdf file and extract all the variables and
+ * their dimensions. Add the variables and their dimensions to the instance of DDS.
+ *
+ * @param dds_table Add information to this DDS instance
+ * @param filename The path to the netCDF file.
+ */
 void nc_read_dataset_variables(DDS &dds_table, const string &filename)
 {
-    //ncopts = 0;
-    int ncid;
-    auto errstat = nc_open(filename.c_str(), NC_NOWRITE, &ncid);
-    if (errstat != NC_NOERR)
-        throw Error(errstat, "Could not open " + filename + ".");
-
-    // how many variables?
-    int nvars;
-    errstat = nc_inq_nvars(ncid, &nvars);
-    if (errstat != NC_NOERR)
-        throw Error(errstat, "Could not inquire about netcdf file: " + path_to_filename(filename) + ".");
+    const NetCDFFile nc_file(filename);
 
     // dataset name
     dds_table.set_dataset_name(name_path(filename));
 
-    // read variables' classes
-    read_all_variables(dds_table, filename, ncid, nvars);
+    // how many variables?
+    int nvars;
+    auto errstat = nc_inq_nvars(nc_file.id(), &nvars);
+    if (errstat != NC_NOERR)
+        throw Error(errstat, "Could not inquire about netcdf file: " + path_to_filename(filename) + ".");
 
-    if (nc_close(ncid) != NC_NOERR)
-        throw InternalErr(__FILE__, __LINE__, "ncdds: Could not close the dataset!");
+    // read variables' classes
+    read_all_variables(dds_table, filename, nc_file.id(), nvars);
 }
+
 

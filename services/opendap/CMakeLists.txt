@@ -35,6 +35,7 @@ target_link_libraries(handler PUBLIC
 		# replace 'libdap' below with 'libdap_interface' for the 'wrapped'
 		# version of the library. jhrg 6/16/25
 		libdap
+		libdapserver    # ← pull in dapserver API
 		netcdf_support
 		${NC_LIB}
         httplib  # assuming header-only httplib as an INTERFACE target

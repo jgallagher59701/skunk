@@ -18,12 +18,14 @@ target_include_directories(httplib INTERFACE external/cpp-httplib)
 #	set(LIBDAP_PREFIX $ENV{prefix})	# NB: Here use $ENV{} to access the value. Good grief. jhrg 6/16/25
 #endif()
 
-set(LIBDAP_PREFIX "/Users/jimg/src/opendap/hyrax_git/build")
-message(STATUS "Using LIBDAP_PREFIX=${LIBDAP_PREFIX}")
+set(LIBDAP_PREFIX "/Users/jimg/src/opendap/hyrax/build")
+
+message(STATUS "Using LIBDAP_PREFIX = ${LIBDAP_PREFIX}")
 
 include_directories(${LIBDAP_PREFIX}/include)
 link_directories(${LIBDAP_PREFIX}/lib)
 
+# The main part of libdap
 find_library(LIBDAP_LIB
 		NAMES dap dapclient dapserver
 		PATHS ${LIBDAP_PREFIX}/lib
@@ -36,6 +38,18 @@ set_target_properties(libdap PROPERTIES
 		INTERFACE_INCLUDE_DIRECTORIES ${LIBDAP_PREFIX}/include
 )
 
+# The server‐side part of libdap
+find_library(LIBDAPSERVER_LIB
+        NAMES dapserver
+        PATHS ${LIBDAP_PREFIX}/lib
+        REQUIRED
+)
+
+add_library(libdapserver SHARED IMPORTED GLOBAL)
+set_target_properties(libdapserver PROPERTIES
+        IMPORTED_LOCATION ${LIBDAPSERVER_LIB}
+        INTERFACE_INCLUDE_DIRECTORIES ${LIBDAP_PREFIX}/include
+)
 
 # Including libdap this way worked but on my machine failed at run-time
 # because I have other copies of these libraries from other builds. I

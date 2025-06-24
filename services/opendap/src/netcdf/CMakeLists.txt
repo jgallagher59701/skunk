@@ -10,17 +10,9 @@ target_sources(netcdf_support PRIVATE
         NCUrl.cc        DataAccessNetCDF.cpp
 )
 
-# Set in the top-level CMakeLists file. jhrg 6/21/25
+# NC_INCLUDE_DIR and NC_LIB arem set in the top-level
+# CMakeLists file. jhrg 6/21/25
 
-#find_package(PkgConfig REQUIRED)
-## pkg_check_modules(NETCDF REQUIRED libnetcdf)   # looks for netcdf_support.pc
-#find_package(NetCDF REQUIRED)
-
-#find_path(NC_INCLUDE_DIR netcdf.h
-#        HINTS /Users/jimg/src/opendap/hyrax_git/build/deps/include )
-#find_library(NC_LIB netcdf
-#        HINTS /Users/jimg/src/opendap/hyrax_git/build/deps/lib )
-message(STATUS "NC_LIB: ${NC_LIB}")
 target_include_directories(netcdf_support PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${OPENDAP_SRC}
