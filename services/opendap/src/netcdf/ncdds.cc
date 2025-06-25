@@ -40,6 +40,10 @@
 //
 // ReZa 10/20/94
 
+// -*- mode: c++; c-basic-offset:4 -*-
+
+/// OLD code follows
+#if 1
 #include "config_nc.h"
 
 #include <cstdio>
@@ -54,7 +58,7 @@
 #include <libdap/mime_util.h>
 #include <libdap/util.h>
 
-#include "NCRequestHandler.h"
+#include "DataAccessNetCDF.h"
 #include "nc_util.h"
 
 #include "NCInt32.h"
@@ -85,7 +89,7 @@ build_scalar(const string &varname, const string &dataset, nc_type datatype)
             return (new NCStr(varname, dataset));
 
         case NC_BYTE:
-            if (NCRequestHandler::get_promote_byte_to_short()) {
+            if (DataAccessNetCDF::get_promote_byte_to_short()) {    // get_promote_byte_to_short is always false. 6/22/25
                 return (new NCInt16(varname, dataset));
             }
             else {
@@ -118,7 +122,7 @@ build_scalar(const string &varname, const string &dataset, nc_type datatype)
 #if NETCDF_VERSION >= 4
         case NC_INT64:
         case NC_UINT64:
-            if (NCRequestHandler::get_ignore_unknown_types())
+            if (DataAccessNetCDF::get_ignore_unknown_types())
                 cerr << "The netCDF handler does not currently support 64 bit integers.";
             else
                 throw Error("The netCDF handler does not currently support 64 bit integers.");
@@ -132,19 +136,6 @@ build_scalar(const string &varname, const string &dataset, nc_type datatype)
     return 0;
 }
 
-#if 0
-// Replaced by code in nc_util.cc. jhrg 2/9/12
-
-static bool is_user_defined(nc_type type)
-{
-#if NETCDF_VERSION >= 4
-    return type >= NC_FIRSTUSERTYPEID;
-#else
-    return false;
-#endif
-}
-#endif
-
 /** Build a grid given that one has been found. The Grid's Array is already
     allocated and is passed in along with a number of arrays containing
     information about the dimensions of the Grid.
@@ -152,9 +143,10 @@ static bool is_user_defined(nc_type type)
     Note: The dim_szs and dim_nms arrays could be removed since that information
     is already in the Array ar. */
 static Grid *build_grid(Array *ar, int ndims, const nc_type array_type,
-        const char map_names[MAX_NC_VARS][MAX_NC_NAME],
+        //const char map_names[MAX_NC_VARS][MAX_NC_NAME],
+        std::vector<std::array<char, MAX_NC_NAME>> &map_names,
         const nc_type map_types[MAX_NC_VARS],
-        const size_t map_sizes[MAX_VAR_DIMS],
+        const size_t map_sizes[MAX_NC_DIMS],
         vector<string> *all_maps)
 {
     // Grids of NC_CHARs are treated as Grids of strings; the outermost
@@ -163,9 +155,9 @@ static Grid *build_grid(Array *ar, int ndims, const nc_type array_type,
         --ndims;
 
     for (int d = 0; d < ndims; ++d) {
-        ar->append_dim(map_sizes[d], map_names[d]);
+        ar->append_dim(map_sizes[d], map_names[d].data());
         // Save the map names for latter use, which might not happen...
-        all_maps->push_back(string(map_names[d]));
+        all_maps->emplace_back(map_names[d].data());
     }
 
     const string &filename = ar->dataset();
@@ -174,10 +166,10 @@ static Grid *build_grid(Array *ar, int ndims, const nc_type array_type,
 
     // Build and add BaseType/Array instances for the maps
     for (int d = 0; d < ndims; ++d) {
-        BaseType *local_bt = build_scalar(map_names[d], filename, map_types[d]);
+        BaseType *local_bt = build_scalar(map_names[d].data(), filename, map_types[d]);
         NCArray *local_ar = new NCArray(local_bt->name(), filename, local_bt);
         delete local_bt;
-        local_ar->append_dim(map_sizes[d], map_names[d]);
+        local_ar->append_dim(map_sizes[d], map_names[d].data());
         gr->add_var(local_ar, maps);
         delete local_ar;
     }
@@ -190,7 +182,7 @@ static Grid *build_grid(Array *ar, int ndims, const nc_type array_type,
  * defined.
  */
 static BaseType *build_user_defined(int ncid, int varid, nc_type xtype, const string &dataset,
-        int ndims, int dim_ids[MAX_VAR_DIMS])
+        int ndims, int dim_ids[MAX_NC_DIMS])
 {
     size_t size;
     nc_type base_type;
@@ -215,7 +207,7 @@ static BaseType *build_user_defined(int ncid, int varid, nc_type xtype, const st
                 nc_inq_compound_field(ncid, xtype, i, field_name, 0, &field_typeid, &field_ndims, &field_sizes[0]);
                 BaseType *field;
                 if (is_user_defined_type(ncid, field_typeid)) {
-		    //is_user_defined(field_typeid)) {
+            //is_user_defined(field_typeid)) {
                     // Odd: 'varid' here seems wrong, but works.
                     field = build_user_defined(ncid, varid, field_typeid, dataset, field_ndims, field_sizes);
                     // Child compound types become anonymous variables but DAP
@@ -265,7 +257,7 @@ static BaseType *build_user_defined(int ncid, int varid, nc_type xtype, const st
         }
 
         case NC_VLEN:
-            if (NCRequestHandler::get_ignore_unknown_types()) {
+            if (DataAccessNetCDF::get_ignore_unknown_types()) {
                 cerr << "in build_user_defined; found a vlen." << endl;
                 return 0;
             }
@@ -416,9 +408,10 @@ static bool find_matching_coordinate_variable(int ncid, int var,
      @param map_names Value-result parameter; the name of each map.
      @param map_types Value-result parameter; the type of each map.
  */
-static bool is_grid(int ncid, int var, int ndims, const int dim_ids[MAX_VAR_DIMS],
-        size_t map_sizes[MAX_VAR_DIMS],
-        char map_names[MAX_NC_VARS][MAX_NC_NAME],
+static bool is_grid(int ncid, int var, int ndims, const int dim_ids[MAX_NC_DIMS],
+        size_t map_sizes[MAX_NC_DIMS],
+        //char map_names[MAX_NC_VARS][MAX_NC_NAME],
+        std::vector<std::array<char, MAX_NC_NAME>> &map_names,
         nc_type map_types[MAX_NC_VARS])
 {
     // Look at each dimension of the variable.
@@ -439,7 +432,7 @@ static bool is_grid(int ncid, int var, int ndims, const int dim_ids[MAX_VAR_DIMS
         if (find_matching_coordinate_variable(ncid, var, dimname, dim_sz, &match_type)) {
             map_types[d] = match_type;
             map_sizes[d] = dim_sz;
-            strncpy(map_names[d], dimname, MAX_NC_NAME - 1);
+            strncpy(map_names[d].data(), dimname, MAX_NC_NAME - 1);
             map_names[d][MAX_NC_NAME - 1] = '\0';
         }
         else {
@@ -452,7 +445,7 @@ static bool is_grid(int ncid, int var, int ndims, const int dim_ids[MAX_VAR_DIMS
 
 static bool is_dimension(const string &name, vector<string> maps)
 {
-    vector<string>::iterator i = find(maps.begin(), maps.end(), name);
+    auto i = find(maps.begin(), maps.end(), name);
     if (i != maps.end())
         return true;
     else
@@ -473,7 +466,7 @@ static NCArray *build_array(BaseType *bt, int ncid, int var,
         size_t dim_sz;
         int errstat = nc_inq_dim(ncid, dim_ids[d], dimname, &dim_sz);
         if (errstat != NC_NOERR) {
-        	delete ar;
+            delete ar;
             throw Error("netcdf: could not get size for dimension " + long_to_string(d) + " in variable " + long_to_string(var));
         }
 
@@ -494,18 +487,18 @@ static NCArray *build_array(BaseType *bt, int ncid, int var,
  */
 static void read_variables(DDS &dds_table, const string &filename, int ncid, int nvars)
 {
-    // How this function works: The variables are scanned once but because
-    // netCDF includes shared dimensions as variables there are two versions
+    // How this function works: The variables are scanned once, but because
+    // netCDF includes shared dimensions as variables, there are two versions
     // of this function. One writes out the variables as they are found while
     // the other writes scalars and Grids as they are found and saves Arrays
-    // for output last. Then, when writing the arrays, it checks to see if
+    // for output last. When writing the arrays, it checks to see if
     // an array variable is also a grid dimension and, if so, does not write
-    // it out (thus in the second version of the function, all arrays appear
+    // it out. Thus, in the second version of the function, all arrays appear
     // after the other variable types and only those arrays that do not
     // appear as Grid Maps are included.
 
     // These two vectors are used to record the ids of array variables and
-    // the names of all of the Grid Map variables
+    // the names of all the Grid Map variables
     vector<int> array_vars;
     vector<string> all_maps;
 
@@ -513,7 +506,7 @@ static void read_variables(DDS &dds_table, const string &filename, int ncid, int
     char name[MAX_NC_NAME];
     nc_type nctype;
     int ndims;
-    int dim_ids[MAX_VAR_DIMS];
+    int dim_ids[MAX_NC_DIMS];
 
     // Examine each variable in the file; if 'elide_grid_maps' is true, adds
     // only scalars and Grids (Arrays are added in the following loop). If
@@ -525,19 +518,17 @@ static void read_variables(DDS &dds_table, const string &filename, int ncid, int
 
         // These are defined here because they are value-result parameters for
         // is_grid() called below.
-        size_t map_sizes[MAX_VAR_DIMS];
-        char map_names[MAX_NC_VARS][MAX_NC_NAME];
+        size_t map_sizes[MAX_NC_DIMS];
+        // char map_names[MAX_NC_VARS][MAX_NC_NAME];
+        std::vector<std::array<char, MAX_NC_NAME>> map_names(ndims);
         nc_type map_types[MAX_NC_VARS];
 
         // a scalar? NB a one-dim NC_CHAR array will have DAP type of
         // dods_str_c because it's really a scalar string, not an array.
         if (is_user_defined_type(ncid, nctype)) {
-	    // is_user_defined(nctype)) {
-#if NETCDF_VERSION >= 4
             BaseType *bt = build_user_defined(ncid, varid, nctype, filename, ndims, dim_ids);
             dds_table.add_var(bt);
             delete bt;
-#endif
         }
         else if (ndims == 0 || (ndims == 1 && nctype == NC_CHAR)) {
             BaseType *bt = build_scalar(name, filename, nctype);
@@ -554,7 +545,7 @@ static void read_variables(DDS &dds_table, const string &filename, int ncid, int
             delete gr;
         }
         else {
-            if (!NCRequestHandler::get_show_shared_dims()) {
+            if (!DataAccessNetCDF::get_show_shared_dims()) { // get_show_shared_dims is now false by default. 6/22/25
                 array_vars.push_back(varid);
             } else {
                 BaseType *bt = build_scalar(name, filename, nctype);
@@ -571,7 +562,7 @@ static void read_variables(DDS &dds_table, const string &filename, int ncid, int
     // var ids of things that look like simple arrays onto a vector. This code
     // will add all of those that really are arrays and not the ones that are
     // dimensions used by a Grid.
-    if (!NCRequestHandler::get_show_shared_dims()) {
+    if (!DataAccessNetCDF::get_show_shared_dims()) { // get_show_shared_dims is now false by default. 6/22/25
         // Now just loop through the saved array variables, writing out only
         // those that are not Grid Maps
         nvars = array_vars.size();
@@ -599,36 +590,39 @@ static void read_variables(DDS &dds_table, const string &filename, int ncid, int
         }
     }
 }
-
+#endif
+#if 0
 /** Given a reference to an instance of class DDS and a filename that refers
-    to a netcdf file, read the netcdf file and extract all the dimensions of
-    each of its variables. Add the variables and their dimensions to the
-    instance of DDS.
+  to a netcdf file, read the netcdf file and extract all the dimensions of
+  each of its variables. Add the variables and their dimensions to the
+  instance of DDS.
 
-    @param elide_dimension_arrays If true, don't include an array if it's
-    really a dimension used by a Grid. */
+  @param elide_dimension_arrays If true, don't include an array if it's
+  really a dimension used by a Grid. */
 void nc_read_dataset_variables(DDS &dds_table, const string &filename)
 {
-    ncopts = 0;
-    int ncid, errstat;
-    int nvars;
+  ncopts = 0;
+  int ncid, errstat;
+  int nvars;
 
-    errstat = nc_open(filename.c_str(), NC_NOWRITE, &ncid);
-    if (errstat != NC_NOERR)
-        throw Error(errstat, "Could not open " + filename + ".");
+  errstat = nc_open(filename.c_str(), NC_NOWRITE, &ncid);
+  if (errstat != NC_NOERR)
+      throw Error(errstat, "Could not open " + filename + ".");
 
-    // how many variables?
-    errstat = nc_inq_nvars(ncid, &nvars);
-    if (errstat != NC_NOERR)
-        throw Error(errstat, "Could not inquire about netcdf file: " + path_to_filename(filename) + ".");
+  // how many variables?
+  errstat = nc_inq_nvars(ncid, &nvars);
+  if (errstat != NC_NOERR)
+      throw Error(errstat, "Could not inquire about netcdf file: " + path_to_filename(filename) + ".");
 
-    // dataset name
-    dds_table.set_dataset_name(name_path(filename));
+  // dataset name
+  dds_table.set_dataset_name(name_path(filename));
 
-    // read variables' classes
-    read_variables(dds_table, filename, ncid, nvars);
+  // read variables' classes
+  read_variables(dds_table, filename, ncid, nvars);
 
-    if (nc_close(ncid) != NC_NOERR)
-        throw InternalErr(__FILE__, __LINE__, "ncdds: Could not close the dataset!");
+  if (nc_close(ncid) != NC_NOERR)
+      throw InternalErr(__FILE__, __LINE__, "ncdds: Could not close the dataset!");
 }
+#endif
+
 

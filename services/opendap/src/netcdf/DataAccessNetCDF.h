@@ -28,6 +28,9 @@ class DMR;
  * to cache binary DMR objects as well as other things.
  */
 class DataAccessNetCDF: public DataAccess {
+    static bool show_shared_dims_;
+    static bool ignore_unknown_types_;
+    static bool promote_byte_to_short_;
 
 public:
     DataAccessNetCDF() = default;
@@ -38,15 +41,14 @@ public:
     DataAccessNetCDF& operator=(DataAccessNetCDF&&) noexcept = default;
     ~DataAccessNetCDF() override = default;
 
-#if 0
+    static bool get_show_shared_dims() { return show_shared_dims_;  }
+    static bool get_ignore_unknown_types() { return ignore_unknown_types_; }
+    static bool get_promote_byte_to_short() { return promote_byte_to_short_; }
 
-    virtual std::unique_ptr<libdap::DMR> get_dmr(const std::string &path, const std::string &ce, const std::string &func);
-    virtual std::unique_ptr<libdap::DMR> get_dmr(const std::string &path, const std::string &ce, const std::string &func) {
-        return make_unique<libdap::DMR>()
-    }
+    std::unique_ptr<libdap::DMR> get_dmr(const std::string &path, const std::string &ce, const std::string &func) override;
+#if 0
     virtual std::unique_ptr<libdap::DMR> get_dmr(const std::string &path, const std::string &ce) = 0;
     virtual std::unique_ptr<libdap::DMR> get_dmr(const std::string &path) = 0;
-
 #endif
 };
 

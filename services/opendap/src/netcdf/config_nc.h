@@ -4,9 +4,7 @@
 #ifndef _config_nc_h
 #define _config_nc_h
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#define NETCDF_VERSION 4
 
 /* Shorthand for gcc's unused attribute feature */
 #if defined(__GNUG__) || defined(__GNUC__)

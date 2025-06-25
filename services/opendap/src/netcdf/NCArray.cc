@@ -51,9 +51,11 @@
 #include <libdap/util.h>
 #include <libdap/debug.h>
 
+#if 0
 #include <BESDebug.h>
+#endif
 
-#include "NCRequestHandler.h"
+#include "DataAccessNetCDF.h"
 #include "NCArray.h"
 #include "NCStructure.h"
 // #include "nc_util.h"
@@ -159,7 +161,6 @@ void NCArray::do_cardinal_array_read(int ncid, int varid, nc_type datatype,
     size = nctypelen(datatype);
 #endif
 
-    BESDEBUG( MODULE, prolog << "size = " << size << endl);
     switch (datatype) {
         case NC_FLOAT:
         case NC_DOUBLE:
@@ -204,7 +205,7 @@ void NCArray::do_cardinal_array_read(int ncid, int varid, nc_type datatype,
                 if (errstat != NC_NOERR)
                     throw Error(errstat, prolog + "Could not get the value for variable '" + name() + string("' (NCArray::do_cardinal_array_read)"));
             }
-            if (NCRequestHandler::get_promote_byte_to_short()) {
+            if (DataAccessNetCDF::get_promote_byte_to_short()) {
                 // the data set's signed byte data are going to be stored in a short
                 // not an unsigned byte array. But double check that the template
                 // data type is Int16.
@@ -388,7 +389,7 @@ void NCArray::do_array_read(int ncid, int varid, nc_type datatype,
             }
 
             case NC_VLEN:
-                if (NCRequestHandler::get_ignore_unknown_types())
+                if (DataAccessNetCDF::get_ignore_unknown_types())
                     cerr << "in build_user_defined; found a vlen." << endl;
                 else
                     throw Error("The netCDF handler does not currently support NC_VLEN attributes.");
