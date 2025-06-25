@@ -63,6 +63,7 @@
 #include "NCStr.h"
 #include "NCStructure.h"
 
+#include "nc_util.h"
 #include "DataAccessNetCDF.h"
 
 #include <array>
@@ -161,19 +162,20 @@ inline std::unique_ptr<Grid> build_grid(std::unique_ptr<Array> ar, int ndims, nc
         ar->append_dim(map_sizes[i], map_names[i]);
     }
     auto grid = std::make_unique<NCGrid>(ar->name(), ar->dataset());
-    grid->add_var(ar.release(), libdap::array);
+
     for (int i = 0; i < ndims; ++i) {
         auto bt = build_scalar(map_names[i], ar->dataset(), map_types[i]);
         auto arr = std::make_unique<NCArray>(bt->name(), ar->dataset(), bt.release());
         arr->append_dim(map_sizes[i], map_names[i]);
-        grid->add_var(arr.release(), maps);
+        grid->add_var_nocopy(arr.release(), maps);
     }
+    grid->add_var_nocopy(ar.release(), libdap::array);
     return grid;
 }
 
 // Modern build_user_defined returning unique_ptr<BaseType>
 inline std::unique_ptr<BaseType> build_user_defined(int ncid, int varid, nc_type xtype, const std::string &dataset,
-                                                    int ndims, const int *dim_ids)
+                                                    int ndims, std::vector<int> dim_ids)
 {
     size_t size = 0;
     nc_type base_type;
@@ -191,11 +193,11 @@ inline std::unique_ptr<BaseType> build_user_defined(int ncid, int varid, nc_type
             char field_name[MAX_NAME_LEN];
             nc_type field_type;
             int field_ndims;
-            int field_dim_ids[MAX_VARIABLE_DIMS];
+            std::vector<int> field_dim_ids(MAX_VARIABLE_DIMS);
             nc_inq_compound_field(ncid, xtype, i,
                                   field_name, nullptr,
                                   &field_type, &field_ndims,
-                                  field_dim_ids);
+                                  field_dim_ids.data());
             auto field_bt = build_user_defined(ncid, varid, field_type, dataset, field_ndims, field_dim_ids);
             if (!field_bt) field_bt = build_scalar(field_name, dataset, field_type);
             if (field_ndims == 0 || (field_ndims == 1 && field_type == NC_CHAR)) {
@@ -306,16 +308,18 @@ void read_all_variables(DDS &dds, const std::string &filename, int ncid, int nva
             auto grid = build_grid(std::move(arr), ndims, vtype, map_names, map_types, map_sizes);
             dds.add_var_nocopy(grid.release());
         }
+        else if (is_user_defined_type(ncid, vtype)) {
+            auto bt = build_user_defined(ncid, varid, vtype, filename, ndims, dim_ids);
+            dds.add_var_nocopy(bt.release());
+        }
+        else if (ndims == 0 || (ndims == 1 && vtype == NC_CHAR)) {
+            auto bt = build_scalar(name_buf.data(), filename, vtype);
+            dds.add_var_nocopy(bt.release());
+        }
         else {
-            if (ndims == 0 || (ndims == 1 && vtype == NC_CHAR)) {
-                auto bt = build_scalar(name_buf.data(), filename, vtype);
-                dds.add_var_nocopy(bt.release());
-            }
-            else {
-                auto bt = build_scalar(name_buf.data(), filename, vtype);
-                auto arr = build_array(bt.get(), ncid, varid, vtype, ndims, dim_ids.data());
-                dds.add_var_nocopy(arr.release());
-            }
+            auto bt = build_scalar(name_buf.data(), filename, vtype);
+            auto arr = build_array(bt.get(), ncid, varid, vtype, ndims, dim_ids.data());
+            dds.add_var_nocopy(arr.release());
         }
     }
 }
