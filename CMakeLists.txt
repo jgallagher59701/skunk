@@ -1,16 +1,13 @@
 cmake_minimum_required(VERSION 3.16)
 project(s-works LANGUAGES CXX)
 
-# ─── C++ Configuration ─────────────────────────────────────────────
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# ─── Local Header-Only Libraries ───────────────────────────────────
 # cpp-httplib INTERFACE target
 add_library(httplib INTERFACE)
 target_include_directories(httplib INTERFACE external/cpp-httplib)
 
-# ─── External Dependencies ─────────────────────────────────────────
 #if(NOT DEFINED ENV{prefix}) 	# NB: No $ENV{} here, but set 'set' below. jhrg 6/16/25
 #	set(LIBDAP_PREFIX "/Users/jimg/src/opendap/hyrax/build")
 #	message(FATAL_ERROR "The environment variable 'prefix' is not set. Using default: ${LIBDAP_PREFIX}")
